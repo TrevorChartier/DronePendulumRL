@@ -12,6 +12,7 @@ dependencies = [
     "mujoco==3.3.7",
     "gymnasium",
     "torch",
+    "pytest"
 ]
 
 [tool.setuptools.packages.find]
