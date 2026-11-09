@@ -9,7 +9,7 @@ description = "Reinforcement learning for drone-mounted double pendulum stabiliz
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
-    "mujoco",
+    "mujoco==3.3.7",
     "gymnasium",
     "torch",
 ]
