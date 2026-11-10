@@ -27,6 +27,15 @@ class DronePendulumEnv(gym.Env):
         self.action_space = gym.spaces.Box(low=-1, high=1, shape=(4,), dtype=np.float32)
 
     def reset(self, seed=None, options=None):
+        """Start a new episode.
+
+        Args:
+            seed: Random seed for reproducible episodes
+            options: Additional configuration (unused)
+
+        Returns:
+            tuple: (observation, info) for the initial state
+        """
         super().reset(seed=seed)
 
         angle_range = np.deg2rad(10)
