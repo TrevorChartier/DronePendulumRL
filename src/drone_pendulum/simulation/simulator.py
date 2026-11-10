@@ -32,10 +32,26 @@ class DronePendulumSimulator:
         self.model = self.drone_model.model
         self.data = self.drone_model.data
 
-    def reset(self) -> None:
-        """Reset the simulation to its initial state."""
+    def reset(
+        self,
+        joint_positions: np.ndarray | None = None,
+        joint_velocities: np.ndarray | None = None,
+    ) -> None:
+        """Reset simulation and optionally set initial pendulum conditions."""
+
         mujoco.mj_resetData(self.model, self.data)
         mujoco.mj_forward(self.model, self.data)
+
+        if joint_positions is not None or joint_velocities is not None:
+            if joint_positions is None or joint_velocities is None:
+                raise ValueError(
+                    "Both joint_positions and joint_velocities must be provided."
+                )
+
+            self.drone_model.set_pendulum_state(
+                joint_positions,
+                joint_velocities,
+            )
 
     def step(self, action: np.ndarray, n_substeps: int = 1) -> None:
         """

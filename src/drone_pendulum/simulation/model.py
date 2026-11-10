@@ -101,3 +101,24 @@ class DronePendulumModel:
             self.data.qvel[self.joint1_dof_adr],
             self.data.qvel[self.joint2_dof_adr],
         ])
+        
+    def set_pendulum_state(
+        self,
+        joint_positions: np.ndarray,
+        joint_velocities: np.ndarray,
+    ) -> None:
+        """Set both pendulum joints' positions and velocities."""
+
+        if np.shape(joint_positions) != (2,):
+            raise ValueError("joint_positions must have shape (2,)")
+
+        if np.shape(joint_velocities) != (2,):
+            raise ValueError("joint_velocities must have shape (2,)")
+
+        self.data.qpos[self.joint1_qpos_adr] = joint_positions[0]
+        self.data.qpos[self.joint2_qpos_adr] = joint_positions[1]
+
+        self.data.qvel[self.joint1_dof_adr] = joint_velocities[0]
+        self.data.qvel[self.joint2_dof_adr] = joint_velocities[1]
+
+        mujoco.mj_forward(self.model, self.data)
