@@ -53,6 +53,7 @@ class DronePendulumEnv(gym.Env):
         
         info = self._get_info()
         self.curr_episode_step = 0
+        self.last_action = np.zeros(4, dtype=np.float32)
         
         return self._get_obs(), info
     
@@ -73,7 +74,7 @@ class DronePendulumEnv(gym.Env):
         observation = self._get_obs()
         
         terminated = self._is_unsafe_state(observation)
-        truncated = not terminated and self.curr_episode_step > self.max_episode_len
+        truncated = not terminated and self.curr_episode_step >= self.max_episode_len
         
         reward = self._calc_reward(observation)
         info = self._get_info()
