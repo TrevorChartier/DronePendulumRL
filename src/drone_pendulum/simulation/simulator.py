@@ -31,6 +31,7 @@ class DronePendulumSimulator:
 
         self.model = self.drone_model.model
         self.data = self.drone_model.data
+        self._renderer = None
 
     def reset(
         self,
@@ -92,3 +93,16 @@ class DronePendulumSimulator:
             "joint_positions": self.drone_model.get_joint_positions(),
             "joint_velocities": self.drone_model.get_joint_velocities(),
         }
+
+    def render(self, width: int = 640, height: int = 480) -> np.ndarray:
+        """Return an RGB frame of the current simulation state."""
+        if self._renderer is None:
+            self._renderer = mujoco.Renderer(self.model, height=height, width=width)
+        self._renderer.update_scene(self.data)
+        return self._renderer.render().copy()
+
+    def close(self) -> None:
+        """Release optional rendering resources."""
+        if self._renderer is not None:
+            self._renderer.close()
+            self._renderer = None
