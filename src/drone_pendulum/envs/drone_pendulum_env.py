@@ -10,7 +10,7 @@ class DronePendulumEnv(gym.Env):
     def __init__(
         self,
         model_path,
-        max_episode_len,
+        episode_limit,
         render_mode: str | None = None,
         max_position_error: float = 2.0,
         max_tilt_angle: float = np.deg2rad(60.0),
@@ -25,7 +25,7 @@ class DronePendulumEnv(gym.Env):
         self.initial_drone_pos = None
         self.curr_episode_step = None
         self.last_action = None
-        self.max_episode_len = max_episode_len
+        self.episode_limit = episode_limit
         self.max_position_error = max_position_error
         self.max_tilt_angle = max_tilt_angle
         self.max_linear_velocity = max_linear_velocity
@@ -103,7 +103,7 @@ class DronePendulumEnv(gym.Env):
         observation = self._get_obs()
         
         terminated = self._is_unsafe_state(observation)
-        truncated = not terminated and self.curr_episode_step >= self.max_episode_len
+        truncated = not terminated and self.curr_episode_step >= self.episode_limit
         
         reward = self._calc_reward(observation)
         info = self._get_info()

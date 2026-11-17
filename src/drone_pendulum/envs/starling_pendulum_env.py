@@ -18,8 +18,15 @@ class StarlingPendulumEnv(gym.Env):
         self,
         model_path,
         policy_dt=0.1,
-        max_episode_steps=300,
+        episode_limit=1000,
         render_mode=None,
+        max_position_error=2.0,
+        min_altitude=0.2,
+        max_altitude=3.0,
+        max_tilt_angle=np.deg2rad(60.0),
+        max_linear_velocity=10.0,
+        max_angular_velocity=20.0,
+        terminal_penalty=100.0,
     ):
         if render_mode not in (None, "rgb_array"):
             raise ValueError("render_mode must be None or 'rgb_array'")
@@ -27,7 +34,14 @@ class StarlingPendulumEnv(gym.Env):
         self.render_mode = render_mode
         self.policy_dt = float(policy_dt)
         self.control_steps = max(1, round(self.policy_dt / self.dynamics.sim_dt))
-        self.max_episode_steps = max_episode_steps
+        self.episode_limit = episode_limit
+        self.max_position_error = max_position_error
+        self.min_altitude = min_altitude
+        self.max_altitude = max_altitude
+        self.max_tilt_angle = max_tilt_angle
+        self.max_linear_velocity = max_linear_velocity
+        self.max_angular_velocity = max_angular_velocity
+        self.terminal_penalty = terminal_penalty
         self.controller = MotorDelayLocalWaypointController(
             LocalWaypointController(
                 self.dynamics.model,
@@ -42,6 +56,7 @@ class StarlingPendulumEnv(gym.Env):
         )
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, (24,), dtype=np.float32)
         self.state = None
+        self.reference_position = None
         self.step_count = 0
 
     def _batched_state(self):
@@ -75,8 +90,26 @@ class StarlingPendulumEnv(gym.Env):
         )
         self.dynamics.set_state(self.state)
         self.controller.reset()
+        self.reference_position = self.state.drone.position.copy()
         self.step_count = 0
-        return self._observation(), {}
+        return self._observation(), {"termination_reason": None}
+
+    def _safety_reason(self):
+        position = self.state.drone.position
+        if np.linalg.norm(position[:2] - self.reference_position[:2]) > self.max_position_error:
+            return "position_limit"
+        if not self.min_altitude <= position[2] <= self.max_altitude:
+            return "altitude_limit"
+
+        body_z_world = self.state.drone.rotation[:, 2]
+        tilt_angle = np.arccos(np.clip(body_z_world[2], -1.0, 1.0))
+        if tilt_angle > self.max_tilt_angle:
+            return "tilt_limit"
+        if np.linalg.norm(self.state.drone.velocity) > self.max_linear_velocity:
+            return "linear_velocity_limit"
+        if np.linalg.norm(self.state.drone.angular_velocity) > self.max_angular_velocity:
+            return "angular_velocity_limit"
+        return None
 
     def step(self, action):
         action = np.asarray(action, dtype=np.float32)
@@ -87,11 +120,40 @@ class StarlingPendulumEnv(gym.Env):
             self.state = self.dynamics.step(self.state, thrusts)
         self.step_count += 1
         observation = self._observation()
-        pendulum_cost = np.sum((1.0 - observation[-4::2]) ** 2)
-        velocity_cost = np.sum(self.state.joint_velocities ** 2)
-        terminated = bool(np.linalg.norm(self.state.drone.position[2]) > 10)
-        truncated = not terminated and self.step_count >= self.max_episode_steps
-        return observation, float(-pendulum_cost - 0.1 * velocity_cost), terminated, truncated, {}
+        angle_cost = np.sum((1.0 - np.cos(self.state.joint_positions)) ** 2)
+        pendulum_velocity_cost = np.sum(self.state.joint_velocities ** 2)
+        position_error = self.state.drone.position - self.reference_position
+        position_cost = np.sum(position_error ** 2)
+        velocity_cost = np.sum(self.state.drone.velocity ** 2)
+        tilt_angle = np.arccos(
+            np.clip(self.state.drone.rotation[2, 2], -1.0, 1.0)
+        )
+        tilt_cost = tilt_angle ** 2
+        action_cost = np.sum(action ** 2)
+
+        reason = self._safety_reason()
+        terminated = reason is not None
+        truncated = not terminated and self.step_count >= self.episode_limit
+        reward = -(
+            5.0 * angle_cost
+            + 0.1 * pendulum_velocity_cost
+            + 0.5 * position_cost
+            + 0.05 * velocity_cost
+            + 0.5 * tilt_cost
+            + 0.01 * action_cost
+        )
+        if terminated:
+            reward -= self.terminal_penalty
+        info = {
+            "termination_reason": reason if terminated else (
+                "timeout" if truncated else None
+            ),
+            "pendulum_angle_cost": float(angle_cost),
+            "pendulum_velocity_cost": float(pendulum_velocity_cost),
+            "position_cost": float(position_cost),
+            "tilt_angle": float(tilt_angle),
+        }
+        return observation, float(reward), terminated, truncated, info
 
     def close(self):
         self.dynamics.close()

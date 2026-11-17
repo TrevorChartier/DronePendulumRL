@@ -23,13 +23,13 @@ STARLING_MODEL_PATH = (
 
 def make_drone_pendulum_env(
     model_path: str | None = None,
-    max_episode_len: int = 1000,
+    episode_limit: int = 1000,
     **env_kwargs,
 ) -> DronePendulumEnv:
     """Create the registered environment with project defaults."""
     return DronePendulumEnv(
         model_path=str(MODEL_PATH if model_path is None else model_path),
-        max_episode_len=max_episode_len,
+        episode_limit=episode_limit,
         **env_kwargs,
     )
 
@@ -48,9 +48,10 @@ def register_envs() -> None:
         )
 
 
-def make_starling_pendulum_env(model_path=None, **env_kwargs):
+def make_starling_pendulum_env(model_path=None, episode_limit=300, **env_kwargs):
     return StarlingPendulumEnv(
         model_path=str(STARLING_MODEL_PATH if model_path is None else model_path),
+        episode_limit=episode_limit,
         **env_kwargs,
     )
 
