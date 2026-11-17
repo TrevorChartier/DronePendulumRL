@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from drone_pendulum.training import PPOConfig, TrainingExperiment
+from drone_pendulum.training import PPOConfig, RLTrainer
 
 
 def checkpoint_for_iteration(run_dir: Path, iteration: int) -> Path:
@@ -24,7 +24,7 @@ def main() -> None:
 
     config = PPOConfig(**json.loads((args.run_dir / "config.json").read_text()))
     output_dir = args.output_dir or args.run_dir / "videos"
-    experiment = TrainingExperiment(config, args.run_dir)
+    experiment = RLTrainer(config, args.run_dir)
     for iteration in args.iterations:
         checkpoint = checkpoint_for_iteration(args.run_dir, iteration)
         label = f"checkpoint_{iteration}"

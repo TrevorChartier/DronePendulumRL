@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from drone_pendulum.training import PPOConfig, TrainingExperiment
+from drone_pendulum.training import PPOConfig, RLTrainer
 
 
 def main() -> None:
@@ -17,7 +17,7 @@ def main() -> None:
     run_dir = args.run_dir
     config = PPOConfig(**json.loads((run_dir / "config.json").read_text()))
     model = args.model or run_dir / "final_model.zip"
-    experiment = TrainingExperiment(config, run_dir)
+    experiment = RLTrainer(config, run_dir)
     print(json.dumps(experiment.evaluate(model, args.episodes), indent=2))
 
 

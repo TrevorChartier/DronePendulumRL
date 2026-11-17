@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
-from drone_pendulum.training import PPOConfig, TrainingExperiment
+from drone_pendulum.training import PPOConfig, RLTrainer
 
 
 def main() -> None:
@@ -24,7 +24,7 @@ def main() -> None:
         total_timesteps=args.total_timesteps,
         max_episode_len=args.max_episode_len,
     )
-    TrainingExperiment(config, run_dir, resume=args.resume).train()
+    RLTrainer(config, run_dir, resume=args.resume).train()
 
 
 if __name__ == "__main__":
