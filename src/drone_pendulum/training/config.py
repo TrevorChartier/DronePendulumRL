@@ -5,7 +5,8 @@ from dataclasses import asdict, dataclass
 
 @dataclass(frozen=True)
 class PPOConfig:
-    env_id: str = "DronePendulum-v0"
+    env_id: str = "StarlingPendulum-v0"
+    policy_type: str = "MlpPolicy"
     max_episode_len: int = 1000
     seed: int = 0
     total_timesteps: int = 100_000

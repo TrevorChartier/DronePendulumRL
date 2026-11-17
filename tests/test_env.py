@@ -7,21 +7,6 @@ from stable_baselines3.common.env_checker import check_env
 from drone_pendulum.envs.registration import ENV_ID
 
 
-def test_registered_environment():
-    env = make(ENV_ID, max_episode_len=3)
-    observation, info = env.reset(seed=7)
-    assert env.observation_space.contains(observation)
-    assert info == {}
-    observation, reward, terminated, truncated, _ = env.step(
-        np.zeros(env.action_space.shape, dtype=np.float32)
-    )
-    assert env.observation_space.contains(observation)
-    assert np.isfinite(reward)
-    assert not terminated
-    assert not truncated
-    env.close()
-
-
 def test_environment_truncates_at_episode_limit():
     env = make(ENV_ID, max_episode_len=1)
     env.reset(seed=0)

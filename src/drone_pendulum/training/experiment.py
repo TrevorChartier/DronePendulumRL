@@ -38,7 +38,7 @@ class TrainingExperiment:
         def factory():
             env = gym.make(
                 self.config.env_id,
-                max_episode_len=self.config.max_episode_len,
+                max_episode_steps=self.config.max_episode_len,
                 render_mode=render_mode,
             )
             env.reset(seed=seed)
@@ -67,7 +67,7 @@ class TrainingExperiment:
         if self.resume is not None:
             return PPO.load(str(self.resume), env=self.train_env)
         return PPO(
-            "MultiInputPolicy",
+            self.config.policy_type,
             self.train_env,
             learning_rate=self.config.learning_rate,
             n_steps=self.config.n_steps,
