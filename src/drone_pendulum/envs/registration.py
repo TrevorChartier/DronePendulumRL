@@ -9,6 +9,7 @@ from drone_pendulum.envs.starling_pendulum_env import StarlingPendulumEnv
 
 ENV_ID = "DronePendulum-v0"
 STARLING_ENV_ID = "StarlingPendulum-v0"
+PLANAR_ENV_ID = "PlanarDronePendulum-v0"
 MODEL_PATH = (
     Path(__file__).resolve().parents[1]
     / "simulation"
@@ -45,6 +46,11 @@ def register_envs() -> None:
         register(
             id=STARLING_ENV_ID,
             entry_point="drone_pendulum.envs.registration:make_starling_pendulum_env",
+        )
+    if PLANAR_ENV_ID not in registry:
+        register(
+            id=PLANAR_ENV_ID,
+            entry_point="drone_pendulum.envs.planar_drone_pendulum_env:PlanarDronePendulumEnv",
         )
 
 
