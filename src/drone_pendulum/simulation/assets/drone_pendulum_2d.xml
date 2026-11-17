@@ -1,0 +1,71 @@
+<!--
+    Planar (2D) drone + double pendulum.
+
+    Everything moves in the world Y-Z plane:
+      - The drone has 3 DOF: slide along Y, slide along Z, and rotate about X (roll).
+      - Both pendulum joints are hinges about X, so the links swing in the same plane.
+
+    The geometry/masses match drone_pendulum.xml (the 3D model) so results carry over
+    when you move to 3D.
+
+    Angle conventions (all measured about +X, right-hand rule):
+      drone_roll : drone attitude, 0 = level
+      joint1     : link1 angle RELATIVE to the drone body, 0 = hanging straight down
+      joint2     : link2 angle RELATIVE to link1,          0 = aligned with link1
+    Absolute (world) link angles are therefore:
+      phi1 = roll + q1
+      phi2 = roll + q1 + q2
+-->
+<mujoco model="planar_drone_double_pendulum">
+
+    <compiler angle="radian" autolimits="true"/>
+
+    <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast">
+        <!-- No contacts: the ground is only visual. Crashes are handled by
+             episode termination in the environment instead. -->
+        <flag contact="disable"/>
+    </option>
+
+    <visual>
+        <headlight diffuse="0.7 0.7 0.7" ambient="0.3 0.3 0.3"/>
+    </visual>
+
+    <worldbody>
+        <light pos="0 0 5" dir="0 0 -1"/>
+        <geom name="ground" type="plane" size="5 5 0.1" rgba="0.3 0.3 0.3 1"/>
+
+        <!-- Fixed marker at the hover target so you can see drift in the viewer -->
+        <site name="target" pos="0 0 2" size="0.03" rgba="0 1 0 0.6"/>
+
+        <!-- Side-on camera looking down -X at the Y-Z plane (used for rendering) -->
+        <camera name="side" pos="5 0 1.5" xyaxes="0 1 0 0 0 1"/>
+
+        <!-- Quadrotor (planar) -->
+        <body name="drone" pos="0 0 2">
+            <joint name="drone_y"    type="slide" axis="0 1 0"/>
+            <joint name="drone_z"    type="slide" axis="0 0 1"/>
+            <joint name="drone_roll" type="hinge" axis="1 0 0"/>
+
+            <geom name="drone_body" type="box" size="0.18 0.18 0.06"
+                  mass="1.0" rgba="0.2 0.4 0.8 1"/>
+
+            <!-- Upper pendulum link -->
+            <body name="link1" pos="0 0 -0.06">
+                <joint name="joint1" type="hinge" axis="1 0 0" damping="0.02"/>
+                <geom name="link1_rod" type="capsule" fromto="0 0 0 0 0 -0.5"
+                      size="0.015" mass="0.03" rgba="0.7 0.7 0.7 1"/>
+                <geom name="link1_mass" type="sphere" pos="0 0 -0.5"
+                      size="0.06" mass="0.12" rgba="0.9 0.3 0.2 1"/>
+
+                <!-- Lower pendulum link -->
+                <body name="link2" pos="0 0 -0.5">
+                    <joint name="joint2" type="hinge" axis="1 0 0" damping="0.02"/>
+                    <geom name="link2_rod" type="capsule" fromto="0 0 0 0 0 -0.5"
+                          size="0.012" mass="0.02" rgba="0.7 0.7 0.7 1"/>
+                    <geom name="link2_mass" type="sphere" pos="0 0 -0.5"
+                          size="0.05" mass="0.08" rgba="0.9 0.3 0.2 1"/>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+</mujoco>
