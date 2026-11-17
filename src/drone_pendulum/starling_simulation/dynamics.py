@@ -48,6 +48,12 @@ class StarlingPendulumDynamics(Dynamics):
         self._last_state = None
         self._hover_key_id = int(self.model.key("hover").id)
         self._renderer = None
+        self._camera = mujoco.MjvCamera()
+        mujoco.mjv_defaultCamera(self._camera)
+        self._camera.type = mujoco.mjtCamera.mjCAMERA_FREE
+        self._camera.distance = 2.5
+        self._camera.azimuth = 135.0
+        self._camera.elevation = -20.0
 
     @property
     def sim_dt(self):
@@ -101,7 +107,9 @@ class StarlingPendulumDynamics(Dynamics):
     def render(self, width=640, height=480):
         if self._renderer is None:
             self._renderer = mujoco.Renderer(self.model, height=height, width=width)
-        self._renderer.update_scene(self.data)
+        drone_position = self.data.xpos[self.drone_body_id]
+        self._camera.lookat[:] = drone_position + np.array([0.0, 0.0, -0.35])
+        self._renderer.update_scene(self.data, camera=self._camera)
         return self._renderer.render().copy()
 
     def close(self):
