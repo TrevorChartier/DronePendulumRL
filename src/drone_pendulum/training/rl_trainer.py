@@ -18,7 +18,7 @@ from drone_pendulum.training.config import PPOConfig
 from drone_pendulum.training.run_utils import prepare_run_dir, write_run_card
 
 
-class TrainingExperiment:
+class RLTrainer:
     """Own the lifecycle and artifacts for one PPO training run."""
 
     def __init__(
