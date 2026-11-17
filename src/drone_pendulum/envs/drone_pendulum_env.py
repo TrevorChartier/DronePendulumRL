@@ -5,13 +5,32 @@ import gymnasium as gym
 from drone_pendulum.simulation.simulator import DronePendulumSimulator
 
 class DronePendulumEnv(gym.Env):
-    def __init__(self, model_path, max_episode_len):
+    metadata = {"render_modes": ["rgb_array"], "render_fps": 60}
+
+    def __init__(
+        self,
+        model_path,
+        max_episode_len,
+        render_mode: str | None = None,
+        max_position_error: float = 2.0,
+        max_tilt_angle: float = np.deg2rad(60.0),
+        max_linear_velocity: float = 10.0,
+        max_angular_velocity: float = 20.0,
+    ):
         self.simulator = DronePendulumSimulator(model_path)
+        if render_mode not in (None, "rgb_array"):
+            raise ValueError("render_mode must be None or 'rgb_array'")
+        self.render_mode = render_mode
         
         self.initial_drone_pos = None
         self.curr_episode_step = None
         self.last_action = None
         self.max_episode_len = max_episode_len
+        self.max_position_error = max_position_error
+        self.max_tilt_angle = max_tilt_angle
+        self.max_linear_velocity = max_linear_velocity
+        self.max_angular_velocity = max_angular_velocity
+        self.termination_reason = None
         self.observation_space = gym.spaces.Dict(
             {
                 "drone_position_delta": gym.spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32), # position relative to initial/desired point
@@ -60,9 +79,10 @@ class DronePendulumEnv(gym.Env):
             self.simulator.get_state()["drone_position"].copy()
         )
         
-        info = self._get_info()
         self.curr_episode_step = 0
         self.last_action = np.zeros(4, dtype=np.float32)
+        self.termination_reason = None
+        info = self._get_info()
         
         return self._get_obs(), info
     
@@ -76,7 +96,7 @@ class DronePendulumEnv(gym.Env):
             tuple: (observation, reward, terminated, truncated, info)
         """
 
-        self.simulator.step(action)
+        self.simulator.step(action, n_substeps=10)
         self.curr_episode_step += 1
         self.last_action = np.asarray(action, dtype=np.float32).copy()
         
@@ -122,13 +142,46 @@ class DronePendulumEnv(gym.Env):
                 state["joint_velocities"], dtype=np.float32
             )
         }
+
+    def render(self):
+        """Render the current state as an RGB frame when enabled."""
+        if self.render_mode != "rgb_array":
+            return None
+        return self.simulator.render()
+
+    def close(self):
+        """Release simulator resources."""
+        self.simulator.close()
         
     def _get_info(self):
-        """TODO : Can return some info here that could be useful for debugging"""
-        return {}
+        """Return episode diagnostics useful during training and evaluation."""
+        return {
+            "termination_reason": self.termination_reason,
+        }
         
     def _is_unsafe_state(self, obs):
-        """TODO: Right now just dummy method. We should implement some logic to end episodes if a crash is imminent"""
+        """Terminate episodes when the state leaves a safe operating envelope."""
+        position_error = float(np.linalg.norm(obs["drone_position_delta"]))
+        if position_error > self.max_position_error:
+            self.termination_reason = "position_limit"
+            return True
+
+        quaternion = obs["drone_orientation"]
+        scalar_part = float(np.clip(abs(quaternion[0]), 0.0, 1.0))
+        tilt_angle = 2.0 * np.arccos(scalar_part)
+        if tilt_angle > self.max_tilt_angle:
+            self.termination_reason = "tilt_limit"
+            return True
+
+        if np.linalg.norm(obs["drone_linear_velocity"]) > self.max_linear_velocity:
+            self.termination_reason = "linear_velocity_limit"
+            return True
+
+        if np.linalg.norm(obs["drone_angular_velocity"]) > self.max_angular_velocity:
+            self.termination_reason = "angular_velocity_limit"
+            return True
+
+        self.termination_reason = None
         return False
     
     def _calc_reward(self, obs):

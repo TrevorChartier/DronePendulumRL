@@ -1,3 +1,4 @@
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
@@ -10,9 +11,12 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "mujoco==3.3.7",
-    "gymnasium",
-    "torch",
-    "pytest"
+    "gymnasium>=0.29.1,<1.1",
+    "torch==2.2.2",
+    "stable-baselines3==2.4.1",
+    "moviepy",
+    "pytest",
+    "tensorboard",
 ]
 
 [tool.setuptools.packages.find]
