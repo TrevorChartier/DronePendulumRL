@@ -1,0 +1,65 @@
+<mujoco model="ModalAI Starling 2 Max">
+  <compiler autolimits="true" assetdir="assets"/>
+
+  <option timestep="0.01" density="1.225" viscosity="1.8e-5"/>
+
+  <default>
+    <default class="starling2max">
+      <!-- Per-rotor ctrlrange upper bound = F at OMEGA_MAX from the dynamometer
+           curve (agent_assets/starling2max_prop_coeffs.md): F = kT·ω².
+           Dynamics converts commanded thrust → ω → F before mj_step.
+           Yaw gear z-component = τ/F = kQ/kT ≈ 0.01358 m (sign-flipped for FLU). -->
+      <geom mass="0"/>
+      <motor ctrlrange="0 6.26"/>
+      <default class="visual">
+        <geom group="2" type="mesh" contype="0" conaffinity="0"/>
+      </default>
+      <site group="5"/>
+    </default>
+  </default>
+
+  <asset>
+    <material name="airframe" rgba="0.678 0.710 0.741 1"/>
+    <mesh class="starling2max" name="starling2max_body" file="body.obj"/>
+  </asset>
+
+  <worldbody>
+    <light name="spotlight" mode="targetbodycom" target="starling2max" pos="0 -1 2"/>
+    <body name="starling2max" pos="0 0 0.1" childclass="starling2max">
+      <freejoint/>
+      <camera name="track" pos="-1 0 .5" xyaxes="0 -1 0 1 0 2" mode="trackcom"/>
+      <!-- Mass and inertia from agent_assets/starling2max.urdf (CAD export).
+           COM offset is sub-cm; IMU site sits at body origin. -->
+      <inertial pos="0.00102 0.00016 0.00741" mass="0.557"
+                diaginertia="0.002943 0.001857 0.004649"/>
+      <site name="imu" pos="0 0 0"/>
+      <geom material="airframe" mesh="starling2max_body" class="visual"/>
+      <!-- Rotor positions from starling2max.urdf joint origins (190 x 260 mm
+           motor-to-motor, datasheet geometry). Ordering: front-right,
+           rear-left, front-left, rear-right (X-quad). -->
+      <site name="thrust1" pos=" 0.095 -0.130 0.0195"/>
+      <site name="thrust2" pos="-0.095  0.130 0.0195"/>
+      <site name="thrust3" pos=" 0.095  0.130 0.0195"/>
+      <site name="thrust4" pos="-0.095 -0.130 0.0195"/>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor class="starling2max" name="thrust1" site="thrust1" gear="0 0 1 0 0 -0.01358"/>
+    <motor class="starling2max" name="thrust2" site="thrust2" gear="0 0 1 0 0 -0.01358"/>
+    <motor class="starling2max" name="thrust3" site="thrust3" gear="0 0 1 0 0  0.01358"/>
+    <motor class="starling2max" name="thrust4" site="thrust4" gear="0 0 1 0 0  0.01358"/>
+  </actuator>
+
+  <sensor>
+    <gyro name="body_gyro" site="imu"/>
+    <accelerometer name="body_linacc" site="imu"/>
+    <framequat name="body_quat" objtype="site" objname="imu"/>
+  </sensor>
+
+  <keyframe>
+    <!-- Hover at 0.3 m; per-rotor ctrl = hover thrust from prop curve (m g / 4). -->
+    <key name="hover" qpos="0 0 0.3 1 0 0 0"
+          ctrl="1.3660425 1.3660425 1.3660425 1.3660425"/>
+  </keyframe>
+</mujoco>
