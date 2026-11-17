@@ -38,7 +38,7 @@ class TrainingExperiment:
         def factory():
             env = gym.make(
                 self.config.env_id,
-                max_episode_steps=self.config.max_episode_len,
+                episode_limit=self.config.max_episode_len,
                 render_mode=render_mode,
             )
             env.reset(seed=seed)
