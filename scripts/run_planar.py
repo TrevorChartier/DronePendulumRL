@@ -49,7 +49,7 @@ class _RealTime:
         return self.inner.act(obs, info)
 
 
-def plot(traj):
+def plot(traj, output=None):
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(4, 1, figsize=(9, 10), sharex=True)
@@ -71,7 +71,11 @@ def plot(traj):
         ax.grid(True, alpha=0.3); ax.legend(loc="upper right")
     fig.suptitle(f"return = {traj.episode_return:.2f}   terminated = {traj.terminated}")
     fig.tight_layout()
-    plt.show()
+    if output:
+        fig.savefig(output)
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 def main():
@@ -86,11 +90,15 @@ def main():
     p.add_argument("--push-time", type=float, default=1.0)
     p.add_argument("--push-duration", type=float, default=0.1)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--video", help="save an MP4 (over SSH, set MUJOCO_GL=egl)")
+    p.add_argument("--plot-file", help="save the state plot instead of opening a window")
     args = p.parse_args()
+    if args.video and args.render:
+        p.error("choose either --video or --render")
 
     env = PlanarDronePendulumEnv(
         PlanarEnvConfig(max_episode_seconds=args.seconds),
-        render_mode="human" if args.render else None,
+        render_mode="human" if args.render else ("rgb_array" if args.video else None),
     )
     controller = make_controller(args.controller, env)
     if args.render:
@@ -107,9 +115,25 @@ def main():
     if args.push:
         disturbance = (args.push_time, "link2", [args.push, 0.0], args.push_duration)
 
-    traj = rollout(env, controller, seed=args.seed, reset_options=reset_options,
-                   disturbance=disturbance)
-    env.close()
+    writer = None
+    if args.video:
+        import imageio.v2 as imageio
+        writer = imageio.get_writer(args.video, fps=round(1 / env.control_dt))
+        original_step = env.step
+
+        def recorded_step(action):
+            result = original_step(action)
+            writer.append_data(env.render())
+            return result
+
+        env.step = recorded_step
+    try:
+        traj = rollout(env, controller, seed=args.seed, reset_options=reset_options,
+                       disturbance=disturbance)
+    finally:
+        if writer is not None:
+            writer.close()
+        env.close()
 
     print(f"steps={len(traj.rewards)}  return={traj.episode_return:.3f}  "
           f"terminated={traj.terminated}")
@@ -118,7 +142,7 @@ def main():
         print(f"  {name:>9s} = {v: .4f}")
 
     if not args.no_plot:
-        plot(traj)
+        plot(traj, args.plot_file)
 
 
 if __name__ == "__main__":
