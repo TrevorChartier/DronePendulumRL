@@ -4,30 +4,30 @@ Reinforcement learning for stabilizing a double pendulum suspended from a drone.
 
 ## Setup
 
-1. Clone the repository.
-2. Create and activate a Python virtual environment.
-3. From the repository root, install the project:
+Use Python 3.11. From the repository root, choose either setup:
 
-   ```bash
-   pip install -e .
-   ```
+With pip:
 
-This installs the project (and all it's dependencies) in editable mode, so changes to the source code are immediately reflected without reinstalling.
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+With uv (creates the environment automatically):
+
+```bash
+uv sync --python 3.11
+```
+
+Both install the project in editable mode, so source changes take effect without reinstalling.
 
 ## Dependencies
 
-Project dependencies are managed in `pyproject.toml`, under `[project]` → `dependencies`.
-
-To add a dependency:
-1. Add its package name to the `dependencies` list in `pyproject.toml`. Potentially specify version so we don't end up with conflicts.
-2. Commit and push the updated file.
-3. Other teammates should pull the changes and run:
-
-   ```bash
-   pip install -e .
-   ```
-
-Pip automatically installs any new dependencies and updates packages when necessary. No need to reinstall after ordinary source code changes.
+Dependencies are listed in `pyproject.toml`. After dependency changes, run
+`pip install -e .` in your activated environment, or `uv sync`.
+If you change dependencies using pip, also refresh `uv.lock` with `uv lock`
+before committing. The lockfile is used by uv; pip ignores it.
 
 ## Project Structure
 
@@ -45,7 +45,7 @@ swing in the same plane) for validating the training pipeline and reward before 
 | `simulation/actuation_2d.py` | `[thrust, roll_rate]` → wrench, P rate loop | done |
 | `simulation/simulator_2d.py` | reset / step / `apply_disturbance` | done |
 | `envs/planar_drone_pendulum_env.py` | Gymnasium env `PlanarDronePendulum-v0` | reward, termination, reset distribution, disturbance schedule are **TODO** |
-| `controllers/lqr_2d.py` | LQR baseline | linearization + DARE are **TODO** |
+| `controllers/lqr_2d.py` | LQR baseline | done |
 | `controllers/cascaded_pd_2d.py` | payload-unaware baseline | **TODO** |
 | `evaluation/rollout.py`, `metrics.py` | rollouts / metrics | rollout done, metrics **TODO** |
 | `scripts/run_planar.py` | run + view + plot any controller | done |
@@ -62,3 +62,30 @@ python scripts/run_planar.py --render --push 3.0
 ```bash
 python -m pytest -q
 ```
+
+## Planar PPO training and evaluation
+
+Run from the repository root after installing the project. With pip, activate your
+virtual environment and run:
+
+```bash
+python scripts/train_hover.py --num-envs 8 --timesteps 1000000 --run-dir runs/hover_ppo
+```
+
+Use a new run directory for each training run. The policy and observation
+normalization statistics are saved there.
+
+Evaluate the trained policy:
+
+```bash
+python scripts/evaluate_hover.py runs/hover_ppo --episodes 10
+```
+
+Evaluate recovery from a 3 N push:
+
+```bash
+python scripts/evaluate_hover.py runs/hover_ppo --episodes 10 --push 3
+```
+
+Evaluation prints results/video and saves a JSON report in the run directory.
+With uv, prefix these commands with `uv run`.
