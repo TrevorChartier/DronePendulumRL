@@ -43,9 +43,19 @@ class PlanarTrackingController(Controller):
         k_att: float = 6.0,
         max_tilt: float = np.deg2rad(35.0),
         use_feedforward: bool = True,
+        mass: float | None = None,
+        ki=(0.0, 0.0),
+        max_integral_acc: float = 3.0,
     ):
         """
         env : planar env, used for constants (mass, gravity, action scaling, dt).
+        ki : (y, z) integral gains on position error (1/s^3), off by default. Like an
+            autopilot's integrator, it removes steady offsets such as a wrong mass.
+        max_integral_acc : anti-windup clamp on the integral term (m/s^2).
+        mass : mass (kg) the controller assumes for gravity compensation and force
+            scaling. Defaults to the total mass (drone + payload); pass
+            bare_drone_mass(env) to get a "regular drone" controller that doesn't know
+            about the payload.
         kp, kd : (y, z) position / velocity gains in acceleration units (1/s^2, 1/s).
         k_att : roll attitude gain (1/s). Keep well below the inner rate-loop bandwidth.
         max_tilt : roll limit on the commanded attitude.
@@ -54,7 +64,7 @@ class PlanarTrackingController(Controller):
         env = env.unwrapped
         model = env.sim.drone_model
         act = env.sim.actuation
-        self.mass = model.total_mass
+        self.mass = float(mass) if mass is not None else model.total_mass
         self.g = model.gravity
         self.thrust_to_action = act.thrust_to_action
         self.max_thrust = act.max_thrust
@@ -67,13 +77,17 @@ class PlanarTrackingController(Controller):
         self.k_att = float(k_att)
         self.max_tilt = float(max_tilt)
         self.use_feedforward = use_feedforward
+        self.ki = np.asarray(ki, dtype=float)
+        self.max_integral_acc = float(max_integral_acc)
 
         self.t = 0.0
+        self.integral_acc = np.zeros(2)
         self.last_ref: RefPoint | None = None
         self.last_debug: dict = {}
 
     def reset(self) -> None:
         self.t = 0.0
+        self.integral_acc = np.zeros(2)
         self.last_ref = None
         self.last_debug = {}
 
@@ -94,7 +108,9 @@ class PlanarTrackingController(Controller):
         j_ref = ref.jerk[1:3] if self.use_feedforward else np.zeros(2)
 
         # 1-2. desired force
-        a_cmd = a_ref - self.kp * (pos - p_ref) - self.kd * (vel - v_ref)
+        self.integral_acc = np.clip(self.integral_acc - self.ki * (pos - p_ref) * self.dt,
+                                    -self.max_integral_acc, self.max_integral_acc)
+        a_cmd = a_ref - self.kp * (pos - p_ref) - self.kd * (vel - v_ref) + self.integral_acc
         F = self.mass * (a_cmd + np.array([0.0, self.g]))
         F[1] = max(F[1], 0.1 * self.mass * self.g)  # never ask to push downwards
 
@@ -114,6 +130,12 @@ class PlanarTrackingController(Controller):
                            "roll_rate_cmd": roll_rate}
         action = np.array([self.thrust_to_action(thrust), roll_rate / self.max_body_rate])
         return np.clip(action, -1.0, 1.0).astype(np.float32)
+
+
+def bare_drone_mass(env) -> float:
+    """Mass of the drone body alone, without the pendulum payload (kg)."""
+    model = env.unwrapped.sim.drone_model
+    return float(model.model.body_mass[model.drone_id])
 
 
 def _wrap(a: float) -> float:

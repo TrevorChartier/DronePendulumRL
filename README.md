@@ -89,6 +89,13 @@ python scripts/run_tracking.py --model 3d --traj circle --plot-file circle.png
 Typical RMS tracking error with the default trajectories: about 1 cm planar, under 1 cm
 3D. Turning off the feedforward (`--no-ff`) makes it 10–20x worse.
 
+Both controllers take `mass=` (and the 3D one `inertia=`) to set what they assume about
+the vehicle, plus optional integral gains `ki=`. Passing `bare_drone_mass(env)` /
+`bare_drone_params(model)` gives a "regular drone" controller tuned without the payload.
+Even with an integrator, that one tracks 4–8x worse in planar and tips over in 3D on
+every moving trajectory, because it underestimates the pitch inertia with the payload
+attached.
+
 **Single-axis hinges and the 3D rate loop.** As on the real drone (bearings, not a ball
 joint), the pendulum joints in `drone_pendulum.xml` only rotate about the body x-axis.
 The payload swings freely in roll but is rigidly attached in pitch, so the drone's

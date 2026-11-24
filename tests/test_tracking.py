@@ -132,3 +132,27 @@ def test_3d_tracks_trajectories(name):
     assert not terminated
     settled = errors[len(errors) // 4:]
     assert np.sqrt(np.mean(settled**2)) < 0.02
+
+
+def test_bare_drone_params_exclude_payload():
+    from drone_pendulum.controllers.tracking_3d import bare_drone_params
+    env = gym.make(ENV_ID, episode_limit=1)
+    sim = env.unwrapped.simulator
+    mass, J = bare_drone_params(sim.model)
+    env.close()
+    assert mass < sim.drone_model.total_mass
+    assert J[1, 1] < 0.02  # no rigid payload in pitch
+
+
+def test_integral_action_removes_mass_mismatch_offset():
+    from drone_pendulum.controllers.tracking_2d import bare_drone_mass
+    env = PlanarDronePendulumEnv(PlanarEnvConfig(
+        max_episode_seconds=10.0, init_joint_angle_range=0.0, init_joint_vel_range=0.0))
+    for ki, expect_offset in (((0.0, 0.0), True), ((1.0, 3.0), False)):
+        ctrl = PlanarTrackingController(env, Hover(), mass=bare_drone_mass(env), ki=ki)
+        obs, info = env.reset(seed=0)
+        ctrl.reset()
+        for _ in range(1000):
+            obs, *_ = env.step(ctrl.act(obs, info))
+        assert (abs(obs[1]) > 0.2) == expect_offset  # z sag from the underestimated mass
+    env.close()

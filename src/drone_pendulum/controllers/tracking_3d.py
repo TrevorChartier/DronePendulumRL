@@ -83,6 +83,20 @@ def effective_rotational_inertia(model: mujoco.MjModel, free_joint: str = "drone
     return 0.5 * (J + J.T)
 
 
+def bare_drone_params(model: mujoco.MjModel, body: str = "drone") -> tuple[float, np.ndarray]:
+    """Mass (kg) and body-frame inertia (3x3) of the drone body alone, no payload.
+
+    Use these as TrackingController3D(mass=..., inertia=...) to get a "regular drone"
+    controller tuned as if nothing were attached.
+    """
+    bid = model.body(body).id
+    R = np.zeros(9)
+    mujoco.mju_quat2Mat(R, np.asarray(model.body_iquat[bid], dtype=float))
+    R = R.reshape(3, 3)
+    J = R @ np.diag(np.asarray(model.body_inertia[bid], dtype=float)) @ R.T
+    return float(model.body_mass[bid]), J
+
+
 class TrackingController3D(Controller):
     """Tracks a Trajectory with DronePendulumEnv (Dict observation).
 
@@ -102,6 +116,10 @@ class TrackingController3D(Controller):
         use_feedforward: bool = True,
         compensate_rate_loop: bool = True,
         rate_loop_gain: float | None = None,
+        mass: float | None = None,
+        inertia: np.ndarray | None = None,
+        ki=(0.0, 0.0, 0.0),
+        max_integral_acc: float = 3.0,
     ):
         """
         env : DronePendulumEnv, used for constants (mass, inertia, action scaling, dt).
@@ -114,15 +132,22 @@ class TrackingController3D(Controller):
             rates are sent straight to the env.
         rate_loop_gain : proportional gain of the inner rate loop (N m per rad/s).
             Defaults to the env's actuation.rate_gain.
+        mass, inertia : what the controller assumes about the vehicle. Default: total
+            mass (drone + payload) and effective_rotational_inertia(model). Pass
+            bare_drone_params(model) for a controller that doesn't know about the payload.
+        ki : (x, y, z) integral gains on position error (1/s^3), off by default. Like an
+            autopilot's integrator, it removes steady offsets such as a wrong mass.
+        max_integral_acc : anti-windup clamp on the integral term (m/s^2).
         """
         env = env.unwrapped
         sim = env.simulator
-        self.mass = sim.drone_model.total_mass
+        self.mass = float(mass) if mass is not None else sim.drone_model.total_mass
         self.g = float(-sim.model.opt.gravity[2])
         self.max_thrust = sim.actuation.max_thrust
         self.max_body_rate = sim.actuation.max_body_rate
         self.dt = env.control_dt
-        self.inertia = effective_rotational_inertia(sim.model)
+        self.inertia = (np.asarray(inertia, dtype=float) if inertia is not None
+                        else effective_rotational_inertia(sim.model))
         self.rate_loop_gain = float(rate_loop_gain if rate_loop_gain is not None
                                     else sim.actuation.rate_gain)
 
@@ -134,13 +159,17 @@ class TrackingController3D(Controller):
         self.max_tilt = float(max_tilt)
         self.use_feedforward = use_feedforward
         self.compensate_rate_loop = compensate_rate_loop
+        self.ki = np.asarray(ki, dtype=float)
+        self.max_integral_acc = float(max_integral_acc)
 
         self.t = 0.0
+        self.integral_acc = np.zeros(3)
         self.last_ref: RefPoint | None = None
         self.last_debug: dict = {}
 
     def reset(self) -> None:
         self.t = 0.0
+        self.integral_acc = np.zeros(3)
         self.last_ref = None
         self.last_debug = {}
 
@@ -161,7 +190,10 @@ class TrackingController3D(Controller):
         yaw_rate_ref = ref.yaw_rate if self.use_feedforward else 0.0
 
         # 1. desired force, with a tilt limit on its direction
-        a_cmd = a_ref - self.kp * (pos - ref.pos) - self.kd * (vel - ref.vel)
+        self.integral_acc = np.clip(self.integral_acc - self.ki * (pos - ref.pos) * self.dt,
+                                    -self.max_integral_acc, self.max_integral_acc)
+        a_cmd = (a_ref - self.kp * (pos - ref.pos) - self.kd * (vel - ref.vel)
+                 + self.integral_acc)
         F = self.mass * (a_cmd + self.g * E3)
         F[2] = max(F[2], 0.1 * self.mass * self.g)
         horiz = np.linalg.norm(F[:2])
