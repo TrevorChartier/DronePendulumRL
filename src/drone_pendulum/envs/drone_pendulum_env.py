@@ -18,6 +18,8 @@ class DronePendulumEnv(gym.Env):
         max_angular_velocity: float = 20.0,
     ):
         self.simulator = DronePendulumSimulator(model_path)
+        self.n_substeps = 10  # physics steps per env step
+        self.control_dt = self.n_substeps * float(self.simulator.model.opt.timestep)
         if render_mode not in (None, "rgb_array"):
             raise ValueError("render_mode must be None or 'rgb_array'")
         self.render_mode = render_mode
@@ -96,7 +98,7 @@ class DronePendulumEnv(gym.Env):
             tuple: (observation, reward, terminated, truncated, info)
         """
 
-        self.simulator.step(action, n_substeps=10)
+        self.simulator.step(action, n_substeps=self.n_substeps)
         self.curr_episode_step += 1
         self.last_action = np.asarray(action, dtype=np.float32).copy()
         

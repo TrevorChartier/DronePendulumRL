@@ -46,7 +46,8 @@ swing in the same plane) for validating the training pipeline and reward before 
 | `simulation/simulator_2d.py` | reset / step / `apply_disturbance` | done |
 | `envs/planar_drone_pendulum_env.py` | Gymnasium env `PlanarDronePendulum-v0` | reward, termination, reset distribution, disturbance schedule are **TODO** |
 | `controllers/lqr_2d.py` | LQR baseline | done |
-| `controllers/cascaded_pd_2d.py` | payload-unaware baseline | **TODO** |
+| `controllers/cascaded_pd_2d.py` | payload-unaware baseline | **TODO** (superseded by `tracking_2d.py` with a `Hover()` reference) |
+| `controllers/tracking_2d.py`, `tracking_3d.py` | trajectory tracking (planar / 3D) | done, see below |
 | `evaluation/rollout.py`, `metrics.py` | rollouts / metrics | rollout done, metrics **TODO** |
 | `scripts/run_planar.py` | run + view + plot any controller | done |
 | `scripts/train_planar.py` | training entry point | **TODO** |
@@ -62,6 +63,43 @@ python scripts/run_planar.py --render --push 3.0
 ```bash
 python -m pytest -q
 ```
+
+## Trajectory tracking (planar and 3D)
+
+Payload-unaware, differential-flatness tracking controllers that output the envs' own
+`[thrust, body rates]` actions. They use only the drone's state, so with a `Hover()`
+reference they double as the proposal's payload-unaware baseline, and their output can
+be summed with a residual RL policy for trajectory following.
+
+| File | What it is |
+| --- | --- |
+| `controllers/trajectories.py` | `Hover`, `Circle`, `Figure8`, `MinJerkWaypoints`: pos/vel/acc/jerk/yaw vs. time, relative to spawn |
+| `controllers/tracking_2d.py` | `PlanarTrackingController`: position PD + accel/jerk feedforward → thrust, roll, roll rate |
+| `controllers/tracking_3d.py` | `TrackingController3D`: SE(3) geometric controller at body-rate level (Lee / Mellinger) |
+| `scripts/run_tracking.py` | run either one, plot reference vs. actual, optional video |
+
+```bash
+python scripts/run_tracking.py --model planar --traj figure8
+```
+
+```bash
+python scripts/run_tracking.py --model 3d --traj circle --plot-file circle.png
+```
+
+Typical RMS tracking error with the default trajectories: about 1 cm planar, under 1 cm
+3D. Turning off the feedforward (`--no-ff`) makes it 10–20x worse.
+
+**Single-axis hinges and the 3D rate loop.** As on the real drone (bearings, not a ball
+joint), the pendulum joints in `drone_pendulum.xml` only rotate about the body x-axis.
+The payload swings freely in roll but is rigidly attached in pitch, so the drone's
+effective pitch inertia is about 11x its roll inertia (0.13 vs 0.012 kg m²). The env's
+inner rate loop applies the same proportional gain on every axis, so plain body-rate
+commands are tracked far too slowly in pitch and the drone can't move along x.
+`TrackingController3D` therefore computes the effective inertia from the MuJoCo model
+(`effective_rotational_inertia`) and scales its rate commands so the P loop produces
+the torque the desired rate response needs (`--no-rate-comp` shows the failure without
+it). On hardware, the flight controller's own rate loop replaces this P loop: turn the
+compensation off, or set `rate_loop_gain` / `k_rate` to match it.
 
 ## Planar PPO training and evaluation
 
