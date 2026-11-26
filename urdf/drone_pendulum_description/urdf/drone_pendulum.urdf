@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="drone_pendulum">
+  <!-- Inertial properties manually corrected from override-aware SolidWorks
+       mass reports. SI units; tensors about the COM in each link frame.
+       Positive-notation products of inertia are negated for URDF. -->
+  <link
+    name="drone">
+    <inertial>
+      <origin
+        xyz="-0.00004145292 0.00001528421 0.00230668360"
+        rpy="0 0 0" />
+      <mass
+        value="0.6" />
+      <inertia
+        ixx="0.00214257726999470"
+        ixy="-0.00001883155037383"
+        ixz="-0.00000054095819893"
+        iyy="0.00377193513705818"
+        iyz="-0.00000030213756058"
+        izz="0.00544078907477261" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://drone_pendulum_description/meshes/drone.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.894117647058823 0.894117647058823 0.894117647058823 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://drone_pendulum_description/meshes/drone.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <!-- Upper Arm Assy, 100 mm between pivots. -->
+  <link
+    name="link1">
+    <inertial>
+      <origin
+        xyz="0 -0.06122088993 0.00224349809"
+        rpy="0 0 0" />
+      <mass
+        value="0.16460167956" />
+      <inertia
+        ixx="0.00044629143170333"
+        ixy="6.5358E-12"
+        ixz="-2.0825E-13"
+        iyy="0.00009763661936700"
+        iyz="-0.00000099083993749"
+        izz="0.00036140296540746" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://drone_pendulum_description/meshes/upper_arm.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://drone_pendulum_description/meshes/upper_arm.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j0"
+    type="continuous">
+    <!-- The CAD link frames extend along -Y; this rotation maps -Y to
+         global -Z while preserving the global X hinge direction. -->
+    <origin
+      xyz="0 0 -0.041"
+      rpy="1.5707963267948966 0 0" />
+    <parent
+      link="drone" />
+    <child
+      link="link1" />
+    <axis
+      xyz="1 0 0" />
+    <dynamics damping="0" friction="0" />
+  </joint>
+  <!-- Lower Arm Assy, 75 mm between pivots. -->
+  <link
+    name="link2">
+    <inertial>
+      <origin
+        xyz="0 -0.0375 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.067" />
+      <inertia
+        ixx="0.00008748228316206"
+        ixy="0"
+        ixz="0"
+        iyy="0.00000559392736459"
+        iyz="0"
+        izz="0.00008891744393024" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://drone_pendulum_description/meshes/lower_arm.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://drone_pendulum_description/meshes/lower_arm.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="j1"
+    type="continuous">
+    <!-- Link 1 is 100 mm between pivots, along its local -Y axis. -->
+    <origin
+      xyz="0 -0.1 0"
+      rpy="0 0 0" />
+    <parent
+      link="link1" />
+    <child
+      link="link2" />
+    <axis
+      xyz="1 0 0" />
+    <dynamics damping="0" friction="0" />
+  </joint>
+</robot>

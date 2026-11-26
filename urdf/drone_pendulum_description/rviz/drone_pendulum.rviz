@@ -1,0 +1,39 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+  - Class: rviz/Views
+    Name: Views
+Visualization Manager:
+  Displays:
+    - Class: rviz/Grid
+      Name: Grid
+      Cell Size: 0.1
+      Value: true
+    - Class: rviz/RobotModel
+      Name: RobotModel
+      Alpha: 1
+      Enabled: true
+      Robot Description: robot_description
+      Visual Enabled: true
+      Collision Enabled: false
+      Value: true
+    - Class: rviz/TF
+      Name: TF
+      Value: false
+  Global Options:
+    Fixed Frame: drone
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/MoveCamera
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Name: Current View
+      Distance: 0.8
+      Pitch: 0.33
+      Yaw: 5.5
+Window Geometry:
+  Height: 800
+  Width: 1200
