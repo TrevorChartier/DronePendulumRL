@@ -1,0 +1,15 @@
+<!-- Physical model from urdf/drone_pendulum_description. -->
+<mujocoinclude>
+    <body name="link1" pos="0 0 -0.041" quat="0 0 0.7071067811865476 0.7071067811865476">
+        <joint name="joint1" type="hinge" axis="0 0 1" limited="false" damping="0" />
+        <inertial pos="0 -0.06122088993 0.00224349809" mass="0.16460167956" fullinertia="0.00044629143170333 0.00009763661936700 0.00036140296540746 6.5358E-12 -2.0825E-13 -0.00000099083993749" />
+        <geom name="upper_arm_mesh" type="mesh" mesh="link1" contype="2" conaffinity="1" rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+        <site name="link1_tip" pos="0 -0.1 0" size="0.001" rgba="0 0 0 0" />
+        <body name="link2" pos="0 -0.1 0">
+            <joint name="joint2" type="hinge" axis="0 0 1" limited="false" damping="0" />
+            <inertial pos="0 -0.0375 0" mass="0.067" fullinertia="0.00008748228316206 0.00000559392736459 0.00008891744393024 0 0 0" />
+            <geom name="lower_arm_mesh" type="mesh" mesh="link2" contype="2" conaffinity="1" rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+            <site name="link2_tip" pos="0 -0.075 0" size="0.001" rgba="0 0 0 0" />
+        </body>
+    </body>
+</mujocoinclude>

@@ -35,8 +35,7 @@ data.qvel[1] = 0.0  # Y velocity (m/s)
 
 mujoco.mj_forward(model, data)
 
-# Total system mass: 1.0 + 0.15 + 0.10 kg
-hover_thrust = 1.25 * 9.81
+hover_thrust = model.body_subtreemass[drone_id] * -model.opt.gravity[2]
 
 
 with mujoco.viewer.launch_passive(model, data) as viewer:

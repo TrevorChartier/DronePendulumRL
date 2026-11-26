@@ -1,0 +1,5 @@
+<!-- Physical model from urdf/drone_pendulum_description. -->
+<mujocoinclude>
+    <inertial pos="-0.00004145292 0.00001528421 0.00230668360" mass="0.6" fullinertia="0.00214257726999470 0.00377193513705818 0.00544078907477261 -0.00001883155037383 -0.00000054095819893 -0.00000030213756058" />
+    <geom name="airframe_mesh" type="mesh" mesh="drone" contype="2" conaffinity="1" rgba="0.894117647058823 0.894117647058823 0.894117647058823 1" />
+</mujocoinclude>

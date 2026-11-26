@@ -46,8 +46,8 @@ def main() -> None:
     if not math.isfinite(args.duration) or args.duration <= 0:
         parser.error("--duration must be a positive finite number")
 
-    scene_path = STARLING_MODEL_PATH.with_name("starling2max_pendulum_floor.xml")
-    sim = IdealRateSimulator(str(scene_path), drone_body_name="starling2max")
+    # The demo prescribes angular motion, which can fight collision impulses.
+    sim = IdealRateSimulator(str(STARLING_MODEL_PATH), drone_body_name="starling2max")
     sim.reset()
     free_joint_start = sim.model.jnt_qposadr[sim.drone_model.drone_free_id]
     sim.data.qpos[free_joint_start + 2] = 1.0

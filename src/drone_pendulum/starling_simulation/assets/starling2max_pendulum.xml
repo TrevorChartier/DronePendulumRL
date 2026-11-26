@@ -1,5 +1,5 @@
 <mujoco model="ModalAI Starling 2 Max">
-  <compiler autolimits="true" assetdir="assets"/>
+  <compiler autolimits="true" angle="radian" meshdir="../../simulation/assets/meshes"/>
 
   <option timestep="0.01" density="1.225" viscosity="1.8e-5"/>
 
@@ -11,29 +11,19 @@
            Yaw gear z-component = τ/F = kQ/kT ≈ 0.01358 m (sign-flipped for FLU). -->
       <geom mass="0"/>
       <motor ctrlrange="0 6.26"/>
-      <default class="visual">
-        <geom group="2" type="mesh" contype="0" conaffinity="0"/>
-      </default>
       <site group="5"/>
     </default>
   </default>
 
-  <asset>
-    <material name="airframe" rgba="0.678 0.710 0.741 1"/>
-    <mesh class="starling2max" name="starling2max_body" file="body.obj"/>
-  </asset>
+  <include file="../../simulation/assets/cad_meshes.xml"/>
 
   <worldbody>
     <light name="spotlight" mode="targetbodycom" target="starling2max" pos="0 -1 2"/>
     <body name="starling2max" pos="0 0 0.1" childclass="starling2max">
       <freejoint/>
       <camera name="track" pos="-1 0 .5" xyaxes="0 -1 0 1 0 2" mode="trackcom"/>
-      <!-- Mass and inertia from agent_assets/starling2max.urdf (CAD export).
-           COM offset is sub-cm; IMU site sits at body origin. -->
-      <inertial pos="0.00102 0.00016 0.00741" mass="0.557"
-                diaginertia="0.002943 0.001857 0.004649"/>
+      <include file="../../simulation/assets/cad_airframe.xml"/>
       <site name="imu" pos="0 0 0"/>
-      <geom name="airframe_mesh" material="airframe" mesh="starling2max_body" class="visual"/>
       <!-- Rotor positions from starling2max.urdf joint origins (190 x 260 mm
            motor-to-motor, datasheet geometry). Ordering: front-right,
            rear-left, front-left, rear-right (X-quad). -->
@@ -41,16 +31,7 @@
       <site name="thrust2" pos="-0.095  0.130 0.0195"/>
       <site name="thrust3" pos=" 0.095  0.130 0.0195"/>
       <site name="thrust4" pos="-0.095 -0.130 0.0195"/>
-      <body name="pendulum_attachment" pos="0 0 -0.06">
-        <joint name="joint1" type="hinge" axis="1 0 0" damping="0.02"/>
-        <geom name="link1_rod" type="capsule" fromto="0 0 0 0 0 -0.100" size="0.0075" mass="0.038"/>
-        <geom name="link1_mass" type="sphere" pos="0 0 -0.100" size="0.03" mass="0.079"/>
-        <body name="link2" pos="0 0 -0.100">
-          <joint name="joint2" type="hinge" axis="1 0 0" damping="0.02"/>
-          <geom name="link2_rod" type="capsule" fromto="0 0 0 0 0 -0.075" size="0.006" mass="0.019"/>
-          <geom name="link2_mass" type="sphere" pos="0 0 -0.075" size="0.025" mass="0.049"/>
-        </body>
-      </body>
+      <include file="../../simulation/assets/cad_pendulum.xml"/>
     </body>
   </worldbody>
 
@@ -70,6 +51,6 @@
   <keyframe>
     <!-- Hover at 0.3 m; per-rotor ctrl balances the drone and pendulum weight. -->
     <key name="hover" qpos="0 0 0.3 1 0 0 0"
-          ctrl="1.819755 1.819755 1.819755 1.819755"/>
+          ctrl="2.0395031191209 2.0395031191209 2.0395031191209 2.0395031191209"/>
   </keyframe>
 </mujoco>

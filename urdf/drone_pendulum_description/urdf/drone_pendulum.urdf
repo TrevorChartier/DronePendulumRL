@@ -91,17 +91,17 @@
   <joint
     name="j0"
     type="continuous">
-    <!-- The CAD link frames extend along -Y; this rotation maps -Y to
-         global -Z while preserving the global X hinge direction. -->
+    <!-- The CAD arm extends along -Y and its bearing runs along +Z.
+         In the drone frame these map to -Z and +Y, respectively. -->
     <origin
       xyz="0 0 -0.041"
-      rpy="1.5707963267948966 0 0" />
+      rpy="1.5707963267948966 0 3.141592653589793" />
     <parent
       link="drone" />
     <child
       link="link1" />
     <axis
-      xyz="1 0 0" />
+      xyz="0 0 1" />
     <dynamics damping="0" friction="0" />
   </joint>
   <!-- Lower Arm Assy, 75 mm between pivots. -->
@@ -157,7 +157,7 @@
     <child
       link="link2" />
     <axis
-      xyz="1 0 0" />
+      xyz="0 0 1" />
     <dynamics damping="0" friction="0" />
   </joint>
 </robot>

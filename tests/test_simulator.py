@@ -25,6 +25,9 @@ def test_simulator_initialization():
     assert simulator.model is not None
     assert simulator.data is not None
     assert simulator.drone_model.total_mass > 0
+    for name in ("joint1", "joint2"):
+        assert np.allclose(simulator.model.joint(name).axis, [0, 0, 1])
+        assert np.allclose(simulator.data.joint(name).xaxis, [0, 1, 0])
 
 
 def test_state_retrieval():

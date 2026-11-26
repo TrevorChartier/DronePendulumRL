@@ -14,18 +14,23 @@ from drone_pendulum.simulation.simulator_2d import PlanarDronePendulumSimulator
 def test_model_dimensions():
     sim = PlanarDronePendulumSimulator()
     assert sim.drone_model.get_state_vector().shape == (STATE_DIM,)
-    assert np.isclose(sim.drone_model.total_mass, 1.25)
-    assert np.isclose(sim.drone_model.link1_length, 0.5)
-    assert np.isclose(sim.drone_model.link2_length, 0.5)
+    assert np.isclose(sim.drone_model.total_mass, 0.6 + 0.16460167956 + 0.067)
+    assert np.isclose(sim.drone_model.link1_length, 0.100)
+    assert np.isclose(sim.drone_model.link2_length, 0.075)
+    for name in ("drone_roll", "joint1", "joint2"):
+        assert np.allclose(sim.data.joint(name).xaxis, [1, 0, 0])
 
 
 def test_zero_action_hovers():
-    """Zero action = hover thrust, so the drone should barely move from rest."""
+    """Hover thrust keeps the drone near its starting pose while the CAD links swing."""
     sim = PlanarDronePendulumSimulator()
     sim.reset()
     sim.step(np.zeros(2), n_substeps=1000)  # 2 s
     x = sim.drone_model.get_state_vector()
-    assert np.all(np.abs(x) < 1e-3), x
+    # The CAD airframe COM is slightly off the bearing plane's centerline.
+    assert np.linalg.norm(x[:2]) < 0.02, x
+    assert np.linalg.norm(x[5:7]) < 0.02, x
+    assert np.all(np.abs(x[[2, 7]]) < 0.01), x
 
 
 def test_full_thrust_climbs_and_min_thrust_falls():

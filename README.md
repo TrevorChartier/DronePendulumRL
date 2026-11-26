@@ -55,12 +55,14 @@ Control Interval
 >Let's start with 0.1s for now (~10Hz control seems reasonable for random shooting?)
 
 Pendulum Parameters:
-Link 1 Length: 100mm
-Link 2 Length: 75mm
-Mass 1 (at the end of link 1): 79g
-Mass 2 (at the end of link 2): 49g
-Link 1 mass (not including mass 1): 38g
-Link 2 mass (not including mass 1 nor mass 2): 19g
+>Link 1 Length: 100mm
+>Link 2 Length: 75mm
+>Link 1 assembly mass: 164.6g
+>Link 2 assembly mass: 67g
+>Drone mass: 600g
+
+The MuJoCo scenes share the CAD meshes, joint geometry, and inertial properties from
+`urdf/drone_pendulum_description`.
 
 Note: gravity always 9.81 downwards; air resistance enabled
 
