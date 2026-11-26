@@ -13,7 +13,6 @@ dependencies = [
     "mujoco==3.3.7",
     "gymnasium>=0.29.1,<1.1",
     "torch==2.2.2",
-    "stable-baselines3==2.4.1",
     "moviepy",
     "pytest",
     "tensorboard",

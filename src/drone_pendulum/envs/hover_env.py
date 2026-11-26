@@ -115,5 +115,5 @@ class HoverEnv(PlanarDronePendulumEnv):
             raise ValueError("action must contain two finite values")
         obs, reward, terminated, truncated, info = super().step(action)
         info["reward_terms"] = self.reward_terms(obs, np.clip(action, -1, 1))
-        # SB3 needs a finite terminal observation even if the physics failed.
+        # Return a finite terminal observation even if the physics blew up.
         return np.nan_to_num(obs, nan=0.0, posinf=0.0, neginf=0.0), reward, terminated, truncated, info

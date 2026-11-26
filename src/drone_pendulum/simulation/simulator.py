@@ -61,7 +61,7 @@ class DronePendulumSimulator:
         Parameters
         ----------
         action : np.ndarray, shape (4,)
-            Normalized PPO action.
+            Normalized control action.
         n_substeps : int, default=1
             Number of MuJoCo physics steps to execute.
         """

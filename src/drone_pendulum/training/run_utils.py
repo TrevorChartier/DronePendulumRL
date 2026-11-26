@@ -1,22 +1,28 @@
 """Small helpers for experiment directories and run documentation."""
 
+from dataclasses import asdict, is_dataclass
+from datetime import datetime, timezone
 import json
 import platform
 import subprocess
-from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import torch
 
-from drone_pendulum.training.config import PPOConfig
+
+def _config_to_dict(config: Any) -> dict[str, Any]:
+    if hasattr(config, "as_dict") and callable(config.as_dict):
+        return config.as_dict()
+    if is_dataclass(config) and not isinstance(config, type):
+        return asdict(config)
+    if isinstance(config, dict):
+        return dict(config)
+    raise TypeError("config must be a mapping, dataclass instance, or expose .as_dict()")
 
 
 def git_commit() -> str | None:
-    """Return the current Git commit when available.
-    
-    Useful for documenting exactly  what src code was used to train
-    model.
-    """
+    """Return the current Git commit when available."""
     try:
         return subprocess.check_output(
             ["git", "rev-parse", "HEAD"],
@@ -27,18 +33,23 @@ def git_commit() -> str | None:
         return None
 
 
-def prepare_run_dir(run_dir: Path, config: PPOConfig) -> None:
+def prepare_run_dir(run_dir: Path, config: Any) -> None:
     """Create a new run directory and write its initial configuration."""
     run_dir.mkdir(parents=True, exist_ok=False)
-    for name in ("checkpoints", "best_model", "tensorboard"):
+    for name in ("checkpoints", "tensorboard"):
         (run_dir / name).mkdir()
     (run_dir / "config.json").write_text(
-        json.dumps(config.as_dict(), indent=2) + "\n"
+        json.dumps(_config_to_dict(config), indent=2) + "\n"
     )
     write_run_card(run_dir, config, "running")
 
 
-def write_run_card(run_dir: Path, config: PPOConfig, status: str) -> None:
+def write_run_card(
+    run_dir: Path,
+    config: Any,
+    status: str,
+    artifacts: dict[str, str] | None = None,
+) -> None:
     """Write human-readable metadata describing an experiment run."""
     card = {
         "status": status,
@@ -46,12 +57,10 @@ def write_run_card(run_dir: Path, config: PPOConfig, status: str) -> None:
         "git_commit": git_commit(),
         "python": platform.python_version(),
         "torch": torch.__version__,
-        "config": config.as_dict(),
-        "artifacts": {
-            "final_model": "final_model.zip",
-            "normalization": "vecnormalize.pkl",
+        "config": _config_to_dict(config),
+        "artifacts": artifacts
+        or {
             "checkpoints": "checkpoints/",
-            "best_model": "best_model/",
             "tensorboard": "tensorboard/",
         },
     }

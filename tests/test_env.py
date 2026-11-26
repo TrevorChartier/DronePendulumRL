@@ -2,7 +2,7 @@
 
 import numpy as np
 from gymnasium import make
-from stable_baselines3.common.env_checker import check_env
+from gymnasium.utils.env_checker import check_env
 
 from drone_pendulum.envs.registration import ENV_ID
 
@@ -26,7 +26,7 @@ def test_environment_terminates_when_safety_limit_is_exceeded():
     env.close()
 
 
-def test_environment_passes_sb3_checker():
+def test_environment_passes_gym_checker():
     env = make(ENV_ID, episode_limit=3)
-    check_env(env.unwrapped, warn=True)
+    check_env(env.unwrapped, skip_render_check=True)
     env.close()

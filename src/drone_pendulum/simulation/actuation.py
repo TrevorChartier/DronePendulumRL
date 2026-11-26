@@ -5,7 +5,7 @@ from drone_pendulum.simulation.model import DronePendulumModel
 
 
 class Actuation:
-    """Converts normalized PPO actions into physical drone inputs."""
+    """Converts normalized control actions into physical drone inputs."""
 
     def __init__(self, drone_model: DronePendulumModel, max_body_rate: float = 5.0,
                  rate_gain: float = 0.1) -> None:
@@ -32,7 +32,7 @@ class Actuation:
 
     def apply_action(self, action: np.ndarray) -> None:
         """
-        Take normalized PPO actions and apply them to the drone model.
+        Take normalized control actions and apply them to the drone model.
 
         Parameters
         ----------

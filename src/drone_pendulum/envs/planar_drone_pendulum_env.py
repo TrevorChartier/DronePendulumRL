@@ -3,8 +3,8 @@
     obs    : flat float32 vector (see OBS_NAMES)          shape (13,)
     action : [collective_thrust, roll_rate] in [-1, 1]    shape (2,)
 
-The observation is a flat Box rather than a Dict so it plugs straight into standard RL
-libraries (Stable-Baselines3, CleanRL, your own PPO/SAC code) without wrappers.
+The observation is a flat Box rather than a Dict so it plugs straight into dynamics models,
+planners, and standard RL pipelines without extra wrappers.
 
 What is DONE here (plumbing):
     - simulator stepping at a fixed control rate (frame skip)
@@ -232,6 +232,6 @@ class PlanarDronePendulumEnv(gym.Env):
           - drone flipped (|roll| too large)
           - NaNs / blow-up in the state
         Remember: termination != truncation. Termination means "no future reward"
-        and is bootstrapped differently in PPO/SAC.
+        and is handled differently from time-limit truncation during bootstrapping/planning.
         """
         return False
