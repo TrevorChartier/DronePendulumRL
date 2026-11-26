@@ -1,0 +1,413 @@
+{
+  "push_recovery": {
+    "LQR": [
+      {
+        "push_N": 1.0,
+        "survived": true,
+        "settling_s": 1.4099999999999562,
+        "max_swing_deg": 17.479752296973235,
+        "max_pos_err_m": 0.11222484665293633,
+        "rms_pos_err_m": 0.028628000408101748,
+        "residual_swing_deg": 0.0017486941007268438
+      },
+      {
+        "push_N": 2.0,
+        "survived": true,
+        "settling_s": 1.9199999999999,
+        "max_swing_deg": 35.200688411705016,
+        "max_pos_err_m": 0.22877844724979787,
+        "rms_pos_err_m": 0.05866508933571901,
+        "residual_swing_deg": 0.0037041089921508842
+      },
+      {
+        "push_N": 3.0,
+        "survived": true,
+        "settling_s": 2.499999999999836,
+        "max_swing_deg": 53.344930556603366,
+        "max_pos_err_m": 0.35374733252332036,
+        "rms_pos_err_m": 0.09157735944305026,
+        "residual_swing_deg": 0.006089433045288532
+      },
+      {
+        "push_N": 4.0,
+        "survived": true,
+        "settling_s": 2.899999999999792,
+        "max_swing_deg": 72.10727139822586,
+        "max_pos_err_m": 0.4906964041171292,
+        "rms_pos_err_m": 0.12885858601182287,
+        "residual_swing_deg": 0.0091388035420456
+      },
+      {
+        "push_N": 6.0,
+        "survived": true,
+        "settling_s": 3.229999999999756,
+        "max_swing_deg": 112.13179425790824,
+        "max_pos_err_m": 0.7971002060923733,
+        "rms_pos_err_m": 0.2173136218015815,
+        "residual_swing_deg": 0.01801686960179626
+      },
+      {
+        "push_N": 8.0,
+        "survived": true,
+        "settling_s": 3.749999999999699,
+        "max_swing_deg": 157.05584552742994,
+        "max_pos_err_m": 1.1798085999715229,
+        "rms_pos_err_m": 0.3288058571729235,
+        "residual_swing_deg": 0.0325602777057165
+      }
+    ],
+    "Payload-unaware PD (hover)": [
+      {
+        "push_N": 1.0,
+        "survived": true,
+        "settling_s": "inf",
+        "max_swing_deg": 17.56464576358683,
+        "max_pos_err_m": 0.012142897305564181,
+        "rms_pos_err_m": 0.007201933746004723,
+        "residual_swing_deg": 13.461172323817491
+      },
+      {
+        "push_N": 2.0,
+        "survived": true,
+        "settling_s": "inf",
+        "max_swing_deg": 35.04410338227585,
+        "max_pos_err_m": 0.025075250861369098,
+        "rms_pos_err_m": 0.014995404874851728,
+        "residual_swing_deg": 26.90896693528444
+      },
+      {
+        "push_N": 3.0,
+        "survived": true,
+        "settling_s": "inf",
+        "max_swing_deg": 52.15525877581627,
+        "max_pos_err_m": 0.04155356808869769,
+        "rms_pos_err_m": 0.023924739810931146,
+        "residual_swing_deg": 40.24898513488997
+      },
+      {
+        "push_N": 4.0,
+        "survived": true,
+        "settling_s": "inf",
+        "max_swing_deg": 68.34826007540356,
+        "max_pos_err_m": 0.06113717570110025,
+        "rms_pos_err_m": 0.034449395868641,
+        "residual_swing_deg": 53.17490745289954
+      },
+      {
+        "push_N": 6.0,
+        "survived": true,
+        "settling_s": "inf",
+        "max_swing_deg": 95.47623239518471,
+        "max_pos_err_m": 0.10540423600924029,
+        "rms_pos_err_m": 0.06064340837736781,
+        "residual_swing_deg": 74.44200517985738
+      },
+      {
+        "push_N": 8.0,
+        "survived": true,
+        "settling_s": "inf",
+        "max_swing_deg": 117.33903641022034,
+        "max_pos_err_m": 0.16816949067476905,
+        "rms_pos_err_m": 0.08962415395543445,
+        "residual_swing_deg": 84.14214906864095
+      }
+    ],
+    "Open loop (hover thrust)": [
+      {
+        "push_N": 1.0,
+        "survived": false,
+        "settling_s": "inf",
+        "max_swing_deg": 17.58023596192135,
+        "max_pos_err_m": 2.0050698488616154,
+        "rms_pos_err_m": 0.7403014941953683,
+        "residual_swing_deg": null
+      },
+      {
+        "push_N": 2.0,
+        "survived": false,
+        "settling_s": "inf",
+        "max_swing_deg": 35.19756084080526,
+        "max_pos_err_m": 2.0172702192849945,
+        "rms_pos_err_m": 0.7021694933432456,
+        "residual_swing_deg": null
+      },
+      {
+        "push_N": 3.0,
+        "survived": false,
+        "settling_s": "inf",
+        "max_swing_deg": 52.65984219907647,
+        "max_pos_err_m": 2.0137202305067876,
+        "rms_pos_err_m": 0.6460627309661211,
+        "residual_swing_deg": null
+      },
+      {
+        "push_N": 4.0,
+        "survived": false,
+        "settling_s": "inf",
+        "max_swing_deg": 69.46063519080171,
+        "max_pos_err_m": 2.015646941167989,
+        "rms_pos_err_m": 0.603718823354642,
+        "residual_swing_deg": null
+      },
+      {
+        "push_N": 6.0,
+        "survived": false,
+        "settling_s": "inf",
+        "max_swing_deg": 98.11992551418074,
+        "max_pos_err_m": 2.03218924039147,
+        "rms_pos_err_m": 0.5641369495266187,
+        "residual_swing_deg": null
+      },
+      {
+        "push_N": 8.0,
+        "survived": false,
+        "settling_s": "inf",
+        "max_swing_deg": 121.12733054716752,
+        "max_pos_err_m": 2.005301320707141,
+        "rms_pos_err_m": 0.5450770462212442,
+        "residual_swing_deg": null
+      }
+    ]
+  },
+  "max_initial_link_angle_deg": {
+    "LQR": 160,
+    "Payload-unaware PD (hover)": 0
+  },
+  "tracking": {
+    "planar": {
+      "full": {
+        "circle": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 0.5884590375461044,
+          "max_err_cm": 1.179677754505992,
+          "max_swing_deg": 12.637333338656692
+        },
+        "figure8": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 1.0522791915157281,
+          "max_err_cm": 2.2774709358602534,
+          "max_swing_deg": 18.428563542403815
+        },
+        "waypoints": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 0.9100922374841685,
+          "max_err_cm": 2.1718293583498345,
+          "max_swing_deg": 22.19016722478906
+        }
+      },
+      "no_ff": {
+        "circle": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 15.813472000419912,
+          "max_err_cm": 19.97967711888546,
+          "max_swing_deg": 18.424587047136868
+        },
+        "figure8": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 16.51183881137553,
+          "max_err_cm": 21.823324839913578,
+          "max_swing_deg": 22.70016520330219
+        },
+        "waypoints": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 5.889550924839266,
+          "max_err_cm": 13.962165022118233,
+          "max_swing_deg": 29.09881517398585
+        }
+      }
+    },
+    "3d": {
+      "full": {
+        "circle": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 0.27374495541932203,
+          "max_err_cm": 0.687837144069085,
+          "max_swing_deg": 10.939696417599555
+        },
+        "figure8": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 1.270549472444134,
+          "max_err_cm": 2.2923440497149903,
+          "max_swing_deg": 35.11540932171845
+        },
+        "waypoints": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 0.7443009829183804,
+          "max_err_cm": 1.9390426166922943,
+          "max_swing_deg": 14.632895583858232
+        }
+      },
+      "no_ff": {
+        "circle": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 19.373867619522134,
+          "max_err_cm": 20.550598394729974,
+          "max_swing_deg": 18.877259750672348
+        },
+        "figure8": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 27.058147589810176,
+          "max_err_cm": 37.064710330645084,
+          "max_swing_deg": 52.50172584520168
+        },
+        "waypoints": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 8.577430305688273,
+          "max_err_cm": 20.15893848391098,
+          "max_swing_deg": 19.930137984483213
+        }
+      },
+      "no_rate_comp": {
+        "circle": {
+          "completed": false,
+          "duration_s": 4.819999999999985,
+          "rms_err_cm": null,
+          "max_err_cm": 197.83068940398215,
+          "max_swing_deg": 60.50419240730184
+        },
+        "figure8": {
+          "completed": false,
+          "duration_s": 4.14,
+          "rms_err_cm": null,
+          "max_err_cm": 144.39349444267566,
+          "max_swing_deg": 74.2292632259893
+        },
+        "waypoints": {
+          "completed": false,
+          "duration_s": 3.720000000000003,
+          "rms_err_cm": null,
+          "max_err_cm": 217.34258459065344,
+          "max_swing_deg": 60.78909424454488
+        }
+      }
+    }
+  },
+  "aware_vs_regular": {
+    "planar": {
+      "circle": {
+        "aware": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 0.6427108050662534,
+          "max_err_cm": 1.2780562125007733,
+          "max_swing_deg": 12.711543271113202
+        },
+        "regular": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 5.401048973552718,
+          "max_err_cm": 36.39217355015951,
+          "max_swing_deg": 11.292245732793232
+        }
+      },
+      "figure8": {
+        "aware": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 1.1601277856481989,
+          "max_err_cm": 2.279110150624705,
+          "max_swing_deg": 18.416821679578224
+        },
+        "regular": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 5.981108430425931,
+          "max_err_cm": 35.91266570098321,
+          "max_swing_deg": 15.338128135078167
+        }
+      },
+      "waypoints": {
+        "aware": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 0.9331047662234613,
+          "max_err_cm": 2.311601942392401,
+          "max_swing_deg": 22.330560405122778
+        },
+        "regular": {
+          "completed": true,
+          "duration_s": 11.999999999999789,
+          "rms_err_cm": 3.4728806982789857,
+          "max_err_cm": 34.93375998142891,
+          "max_swing_deg": 17.270701388088114
+        }
+      }
+    },
+    "3d": {
+      "circle": {
+        "aware": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 0.2987933823122961,
+          "max_err_cm": 0.7236563635562233,
+          "max_swing_deg": 10.978906477273906
+        },
+        "regular": {
+          "completed": false,
+          "duration_s": 7.379999999999931,
+          "rms_err_cm": null,
+          "max_err_cm": 171.96421974705544,
+          "max_swing_deg": 66.69435574336009
+        }
+      },
+      "figure8": {
+        "aware": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 1.2184840338631049,
+          "max_err_cm": 2.331444463790438,
+          "max_swing_deg": 35.117178020732446
+        },
+        "regular": {
+          "completed": false,
+          "duration_s": 6.6799999999999455,
+          "rms_err_cm": null,
+          "max_err_cm": 153.92220847700037,
+          "max_swing_deg": 63.653883901048665
+        }
+      },
+      "waypoints": {
+        "aware": {
+          "completed": true,
+          "duration_s": 11.999999999999833,
+          "rms_err_cm": 0.7613790023785619,
+          "max_err_cm": 1.9994051217705613,
+          "max_swing_deg": 14.630902377120824
+        },
+        "regular": {
+          "completed": false,
+          "duration_s": 5.219999999999977,
+          "rms_err_cm": null,
+          "max_err_cm": 195.66855825940044,
+          "max_swing_deg": 63.26276227250686
+        }
+      }
+    }
+  },
+  "inertia": {
+    "effective_diag": [
+      0.012038400104133623,
+      0.1316954837618267,
+      0.02185758010822898
+    ],
+    "bare_diag": [
+      0.011999999999999999,
+      0.011999999999999999,
+      0.021599999999999998
+    ],
+    "bare_mass": 1.0,
+    "total_mass": 1.25
+  }
+}
