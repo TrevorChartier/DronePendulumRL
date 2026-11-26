@@ -1,73 +1,78 @@
 # DronePendulumRL
+This is Percy's work on MBRL.
+This branch is implementation in 3D space MBRL, similar to hw4.
 
-Model-based reinforcement learning for stabilizing a double pendulum suspended from a drone.
+# Work Plan
+1. Implement Mujoco Simulation (drone, pendulum, environment with no obstacles). Assume the drone has a low-level controller which takes in the following inputs:
+T: collective thrust (scalar)
+p: desired roll rate (scalar)
+q: desired pitch rate (scalar)
+r: desired yaw rate (scalar)
 
-## Setup
+For simplicity, assume that the drone reacts instantaneously for now (i.e. given a setpoint, it is reached immediately at the next tick in the simulation.)
 
-Use Python 3.11. From the repository root, choose either setup:
+To test the simulation, have the following scenario:
+-Let the drone take on a random thrust, roll, pitch, and yaw (fixed throughout the simulation) and let it run with those values; do not fix the seed, just use a random one every time
 
-With pip:
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-With uv (creates the environment automatically):
-
-```bash
-uv sync --python 3.11
-```
-
-Both install the project in editable mode, so source changes take effect without reinstalling.
-
-## Dependencies
-
-Dependencies are listed in `pyproject.toml`. After dependency changes, run
-`pip install -e .` in your activated environment, or `uv sync`.
-If you change dependencies using pip, also refresh `uv.lock` with `uv lock`
-before committing. The lockfile is used by uv; pip ignores it.
-
-## Project Structure
-
-See `docs/architecture.md`
-
-## Simulation & Environments
-
-### Planar (2D) system
-
-A planar version of the system (drone moves in the Y-Z plane, rolls about X; both links
-swing in the same plane):
-
-| File | What it is |
-| --- | --- |
-| `simulation/assets/drone_pendulum_2d.xml` | MJCF (same masses/lengths as 3D) |
-| `simulation/model_2d.py` | State accessors, 10-dim state vector |
-| `simulation/actuation_2d.py` | `[thrust, roll_rate]` -> wrench, P rate loop |
-| `simulation/simulator_2d.py` | Reset / step / `apply_disturbance` |
-| `envs/planar_drone_pendulum_env.py` | Base Gymnasium env `PlanarDronePendulum-v0` |
-| `envs/hover_env.py` | Planar hover env with shaped reward/cost terms and safety limits |
-| `controllers/lqr_2d.py` | Linearized discrete-time LQR baseline |
-| `controllers/cascaded_pd_2d.py` | Payload-unaware cascaded PD baseline |
-| `evaluation/rollout.py`, `metrics.py` | Generic controller trajectory rollouts and metrics |
-| `scripts/run_planar.py` | Run, view, record, and plot any `Controller` on the planar system |
-
-State vector: `x = [y, z, roll, q1, q2, y_dot, z_dot, roll_dot, q1_dot, q2_dot]`, with
-`q1, q2` relative joint angles (absolute link angles: `phi1 = roll + q1`, `phi2 = phi1 + q2`).
-A zero action corresponds to hover thrust.
+Run the obstacle-free Starling 2 Max demo from the repository root:
 
 ```bash
-python scripts/run_planar.py --controller lqr --render --push 3.0
+python -m pip install -r requirements.txt
+PYTHONPATH=src python scripts/run_ideal_rate.py
 ```
 
-### 3D systems
+The MuJoCo viewer opens by default and runs for 60 simulated seconds.
+`--duration 5` to change the run length.
 
-- `simulation/` + `envs/drone_pendulum_env.py` (`DronePendulum-v0`): Generic 3D quadrotor + double pendulum MJCF model, simulator, and Gymnasium environment. Visualize with `python scripts/view_model.py`.
-- `starling_simulation/` + `envs/starling_pendulum_env.py` (`StarlingPendulum-v0`): Identified Starling 2 Max MuJoCo dynamics, rotor/motor-delay model, inner-loop local waypoint controller, and Gymnasium environment.
+2. Define state and action variables:
 
-## Tests
+State Variables: pos [roll, pitch, yaw, theta1, theta2], vel [vx, vy, vz, p, q, r, omega1, omega2], accelerations [ax, ay, az]
+Note: theta and omegas refer to the double pendulum joint angles and angular velocities
+Note: p,q, and r are the angular velocities of roll, pitch, and yaw
 
-```bash
-python -m pytest -q
-```
+To start, let the policy know the pendulum angles and velocities; leave out the accelerations. Lets call this "Simple Model".
+Later on, try removing this information and replacing it with a k-length history instead of the other variables; include the accelerations. Lets call this "Advanced Model".
+
+
+Action Variables: thrust (collective), p_des, q_des, r_des
+
+3. Define the bounds of the variables in training randomization
+
+Drone
+>Position: Start at 5m above the floor; x=0, y=0; the drone should never collide with the floor
+>Angular Position: [-30,30] degrees in roll and pitch; full [0,360] in yaw, encode yaw as cos(yaw) and sin(yaw) to avoid discontinuity when the angles circle back from 359 to 0; uniformly sampled
+>Velocities: [-1,1] m/s for vx, vy, and vz; uniformly sampled
+
+Pendulum
+>Position: [-50,50] degrees from vertical for theta1 relative to the drone, where 0 is straight down from the drone; [-120,120] relative to theta1 for theta2; uniformly sampled
+>Angular Velocities: [-60,60] degrees/s for omega1, omega2; uniformly sampled
+
+Actions
+>Collective Thrust: [0.6,1.4] times the hover thrust; uniformly sampled
+>Angular Velocities: [-20,20] degrees/s for p,q, and r; uniformly sampled
+
+Control Interval
+>Let's start with 0.1s for now (~10Hz control seems reasonable for random shooting?)
+
+Pendulum Parameters:
+Link 1 Length: 100mm
+Link 2 Length: 75mm
+Mass 1 (at the end of link 1): 79g
+Mass 2 (at the end of link 2): 49g
+Link 1 mass (not including mass 1): 38g
+Link 2 mass (not including mass 1 nor mass 2): 19g
+
+Note: gravity always 9.81 downwards; air resistance enabled
+
+4. Train prediction model s' (s,a) on randomly generated poses
+
+5. Define a reward function.
+
+-> Come up with a reward function here
+
+6. Check that we aren't going out of domain after training on random dataset, otherwise we are going to have to train based on actions chosen by model like in homework 4
+
+7. Run the policy and see how well it works
+
+
+

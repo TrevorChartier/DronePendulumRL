@@ -8,7 +8,7 @@ import numpy as np
 class DronePendulumModel:
     """Loads and provides access to the drone-pendulum simulation model."""
 
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path: str, *, drone_body_name: str = "drone") -> None:
         """
         Initialize the MuJoCo model and resolve component IDs.
 
@@ -20,13 +20,13 @@ class DronePendulumModel:
         self.model = mujoco.MjModel.from_xml_path(model_path)
         self.data = mujoco.MjData(self.model)
 
-        self.drone_id = mujoco.mj_name2id(
-            self.model, mujoco.mjtObj.mjOBJ_BODY, "drone"
-        )
-
-        self.drone_free_id = mujoco.mj_name2id(
-            self.model, mujoco.mjtObj.mjOBJ_JOINT, "drone_free"
-        )
+        drone_body = self.model.body(drone_body_name)
+        self.drone_id = drone_body.id
+        self.drone_free_id = int(drone_body.jntadr[0])
+        if self.drone_free_id < 0 or (
+            self.model.jnt_type[self.drone_free_id] != mujoco.mjtJoint.mjJNT_FREE
+        ):
+            raise ValueError(f"Drone body {drone_body_name!r} must have a free joint.")
         self.joint1_id = mujoco.mj_name2id(
             self.model, mujoco.mjtObj.mjOBJ_JOINT, "joint1"
         )
