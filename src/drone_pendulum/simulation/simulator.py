@@ -17,7 +17,7 @@ from drone_pendulum.simulation.actuation import Actuation
 class DronePendulumSimulator:
     """Manages the MuJoCo simulation and drone actuation."""
 
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path: str, *, drone_body_name: str = "drone") -> None:
         """
         Initialize the simulation.
 
@@ -26,7 +26,7 @@ class DronePendulumSimulator:
         model_path : str
             Path to the MJCF model file.
         """
-        self.drone_model = DronePendulumModel(model_path)
+        self.drone_model = DronePendulumModel(model_path, drone_body_name=drone_body_name)
         self.actuation = Actuation(self.drone_model)
 
         self.model = self.drone_model.model

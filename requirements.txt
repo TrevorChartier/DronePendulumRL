@@ -1,0 +1,5 @@
+# Dependencies for the ideal-rate MuJoCo demo.
+mujoco==3.3.7; python_version < "3.14"
+mujoco>=3.4,<4; python_version >= "3.14"
+gymnasium>=0.29.1,<1.1
+numpy

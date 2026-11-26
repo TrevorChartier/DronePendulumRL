@@ -1,0 +1,9 @@
+<mujoco model="Starling 2 Max with floor">
+  <include file="starling2max_pendulum.xml"/>
+  <worldbody>
+    <geom name="floor" type="plane" size="5 5 0.1" rgba="0.3 0.3 0.3 1"/>
+  </worldbody>
+  <contact>
+    <pair geom1="floor" geom2="airframe_mesh"/>
+  </contact>
+</mujoco>
