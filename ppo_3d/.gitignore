@@ -1,0 +1,8 @@
+runs/*
+!runs/run3/
+runs/run3/ckpt/
+runs/run3/tb/
+.venv/
+__pycache__/
+*.mp4
+MUJOCO_LOG.TXT

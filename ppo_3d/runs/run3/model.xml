@@ -1,0 +1,95 @@
+<!--
+  3D quadrotor + passive double pendulum, built from Percy's SolidWorks CAD export
+  (TrevorChartier/DronePendulumRL, branch mbrl, urdf/drone_pendulum_description).
+
+  Frames: drone body frame is the CAD frame. From the mesh, the motors sit at
+  roughly x = +/-0.13 m, y = +/-0.095 m (long axis along X), consistent with the
+  CAD inertia (Iyy > Ixx). Pendulum hinges run along body +Y, so the links swing
+  in the body XZ plane; the second hinge is parallel to the first.
+
+  Masses (Shayaan, 2026-11-26): links use Percy's CAD assembly masses. Link 1 (164.6 g)
+  is assumed to already include m1 (79 g); link 2 (67 g) excludes m2. m2 is a point
+  mass at the link-2 tip, varied 49-150 g by the env.
+
+  Rotors: 4 thrust actuators; ctrl is rotor thrust in N. The env models rotor speed
+  dynamics (Starling D0012: tau up 55 ms, down 85 ms, 2000-12000 RPM, F = kT w^2).
+  Nothing collides; the floor is visual only and crashes are handled by the env.
+-->
+<mujoco model="drone_double_pendulum_3d">
+  <compiler angle="radian" meshdir="../../assets/meshes" inertiafromgeom="false" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast" density="1.225" viscosity="1.8e-5">
+    <flag contact="disable"/>
+  </option>
+
+  <visual>
+    <headlight diffuse="0.7 0.7 0.7" ambient="0.3 0.3 0.3"/>
+    <global offwidth="1280" offheight="720"/>
+  </visual>
+
+  <asset>
+    <mesh name="drone" file="drone.STL"/>
+    <mesh name="upper_arm" file="upper_arm.STL"/>
+    <mesh name="lower_arm" file="lower_arm.STL"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.25 0.27 0.3" rgb2="0.32 0.34 0.37" width="512" height="512"/>
+    <material name="grid" texture="grid" texrepeat="8 8"/>
+  </asset>
+
+  <default>
+    <geom contype="0" conaffinity="0" group="1"/>
+    <general ctrlrange="0 6.26" gainprm="1"/>
+  </default>
+
+  <worldbody>
+    <light pos="0 0 6" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="floor" type="plane" size="6 6 0.1" material="grid"/>
+    <site name="target" pos="0 0 2" size="0.02" rgba="0.1 0.9 0.2 0.6"/>
+    <camera name="side" pos="0 -1.6 2.1" xyaxes="1 0 0 0 0.2 1"/>
+    <camera name="iso" pos="1.2 -1.2 2.6" xyaxes="0.707 0.707 0 -0.3 0.3 0.9"/>
+
+    <body name="drone" pos="0 0 2">
+      <freejoint name="drone_free"/>
+      <inertial pos="-0.00004145292 0.00001528421 0.00230668360" mass="0.6"
+                fullinertia="0.00214257726999470 0.00377193513705818 0.00544078907477261 -0.00001883155037383 -0.00000054095819893 -0.00000030213756058"/>
+      <geom name="drone_mesh" type="mesh" mesh="drone" rgba="0.89 0.89 0.89 1"/>
+      <camera name="chase" pos="-0.9 -0.9 0.5" xyaxes="0.707 -0.707 0 0.25 0.25 0.93" mode="trackcom"/>
+
+      <!-- Motor sites (body frame). Spin: s=+1 CCW reaction for 1,2; -1 for 3,4. -->
+      <site name="m1" pos=" 0.13 -0.095 0.0195" size="0.01" rgba="1 0.3 0.3 1"/>
+      <site name="m2" pos="-0.13  0.095 0.0195" size="0.01" rgba="0.3 0.3 1 1"/>
+      <site name="m3" pos=" 0.13  0.095 0.0195" size="0.01" rgba="1 0.3 0.3 1"/>
+      <site name="m4" pos="-0.13 -0.095 0.0195" size="0.01" rgba="0.3 0.3 1 1"/>
+
+      <body name="link1" pos="0 0 -0.041" quat="0 0 0.7071067811865476 0.7071067811865476">
+        <joint name="joint1" type="hinge" axis="0 0 1" damping="0"/>
+        <!-- Link 1 = Percy's "Upper Arm Assy": 164.6 g, assumed to include arms, bearings,
+             screws and m1 (79 g). COM and inertia straight from the CAD export. -->
+        <inertial pos="0 -0.06122088993 0.00224349809" mass="0.16460167956"
+                  fullinertia="0.00044629143170333 0.00009763661936700 0.00036140296540746 6.5358E-12 -2.0825E-13 -0.00000099083993749"/>
+        <geom name="upper_arm_mesh" type="mesh" mesh="upper_arm" rgba="0.75 0.75 0.75 1"/>
+        <site name="pivot1" pos="0 0 0" size="0.004"/>
+        <body name="link2" pos="0 -0.1 0">
+          <joint name="joint2" type="hinge" axis="0 0 1" damping="0"/>
+          <!-- Link 2 = Percy's "Lower Arm Assy": 67 g (arm, bearings, screws; m2 NOT included).
+               COM and inertia straight from the CAD export. -->
+          <inertial pos="0 -0.0375 0" mass="0.067"
+                    fullinertia="0.00008748228316206 0.00000559392736459 0.00008891744393024 0 0 0"/>
+          <geom name="lower_arm_mesh" type="mesh" mesh="lower_arm" rgba="0.75 0.75 0.75 1"/>
+          <site name="pivot2" pos="0 0 0" size="0.004"/>
+          <site name="tip" pos="0 -0.075 0" size="0.006" rgba="0.9 0.3 0.2 1"/>
+          <!-- m2: variable payload at the end of link 2. Mass is resampled by the env each episode. -->
+          <body name="m2" pos="0 -0.075 0">
+            <inertial pos="0 0 0" mass="0.0995" diaginertia="5.7e-6 5.7e-6 5.7e-6"/>
+            <geom name="m2_geom" type="sphere" size="0.012" rgba="0.9 0.3 0.2 1"/>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <general name="m1" site="m1" gear="0 0 1 0 0  0.01358"/>
+    <general name="m2" site="m2" gear="0 0 1 0 0  0.01358"/>
+    <general name="m3" site="m3" gear="0 0 1 0 0 -0.01358"/>
+    <general name="m4" site="m4" gear="0 0 1 0 0 -0.01358"/>
+  </actuator>
+</mujoco>
