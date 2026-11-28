@@ -90,14 +90,20 @@ def main():
     p.add_argument("--push-time", type=float, default=1.0)
     p.add_argument("--push-duration", type=float, default=0.1)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--cad", action="store_true", help="use the hardware CAD planar model")
     p.add_argument("--video", help="save an MP4 (over SSH, set MUJOCO_GL=egl)")
     p.add_argument("--plot-file", help="save the state plot instead of opening a window")
     args = p.parse_args()
     if args.video and args.render:
         p.error("choose either --video or --render")
 
+    cfg = PlanarEnvConfig(max_episode_seconds=args.seconds)
+    if args.cad:
+        from drone_pendulum.envs.registration import PLANAR_CAD_MODEL_PATH
+        cfg = PlanarEnvConfig(model_path=str(PLANAR_CAD_MODEL_PATH),
+                              max_episode_seconds=args.seconds)
     env = PlanarDronePendulumEnv(
-        PlanarEnvConfig(max_episode_seconds=args.seconds),
+        cfg,
         render_mode="human" if args.render else ("rgb_array" if args.video else None),
     )
     controller = make_controller(args.controller, env)

@@ -1,0 +1,54 @@
+<!--
+    Planar (2D) drone + double pendulum built from the hardware CAD (same parameters
+    as drone_pendulum_cad.xml).
+
+    Everything moves in the world Y-Z plane. The drone starts yawed -90 degrees so its
+    CAD bearing axis (+Y in the drone frame) lines up with world +X; the drone then
+    rotates about that same axis ("drone_roll" here is the airframe's body-Y rotation)
+    and both links swing in the Y-Z plane.
+
+    Joint names and the state vector match drone_pendulum_2d.xml, so
+    PlanarDronePendulumEnv(PlanarEnvConfig(model_path=str(PLANAR_CAD_MODEL_PATH)))
+    works unchanged. Angle conventions (about world +X):
+      drone_roll : drone attitude, 0 = level
+      joint1     : link1 angle RELATIVE to the drone body, 0 = hanging straight down
+      joint2     : link2 angle RELATIVE to link1,          0 = aligned with link1
+    Absolute link angles: phi1 = roll + q1, phi2 = roll + q1 + q2.
+-->
+<mujoco model="planar_drone_double_pendulum_cad">
+
+    <compiler angle="radian" autolimits="true" meshdir="meshes"/>
+
+    <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast">
+        <!-- No contacts: the ground is only visual. Crashes are handled by
+             episode termination in the environment instead. -->
+        <flag contact="disable"/>
+    </option>
+
+    <visual>
+        <headlight diffuse="0.7 0.7 0.7" ambient="0.3 0.3 0.3"/>
+    </visual>
+
+    <include file="cad_meshes.xml"/>
+
+    <worldbody>
+        <light pos="0 0 5" dir="0 0 -1"/>
+        <geom name="ground" type="plane" size="5 5 0.1" rgba="0.3 0.3 0.3 1"/>
+
+        <!-- Fixed marker at the hover target so you can see drift in the viewer -->
+        <site name="target" pos="0 0 2" size="0.03" rgba="0 1 0 0.6"/>
+
+        <!-- Side-on camera looking down -X at the Y-Z plane (used for rendering) -->
+        <camera name="side" pos="2.2 0 1.85" xyaxes="0 1 0 0 0 1"/>
+
+        <!-- Quadrotor (planar) -->
+        <body name="drone" pos="0 0 2" quat="0.7071067811865476 0 0 -0.7071067811865476">
+            <joint name="drone_y"    type="slide" axis="-1 0 0"/>
+            <joint name="drone_z"    type="slide" axis="0 0 1"/>
+            <joint name="drone_roll" type="hinge" axis="0 1 0"/>
+
+            <include file="cad_airframe.xml"/>
+            <include file="cad_pendulum.xml"/>
+        </body>
+    </worldbody>
+</mujoco>

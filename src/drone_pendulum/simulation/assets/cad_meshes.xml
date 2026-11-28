@@ -1,0 +1,8 @@
+<!-- Physical model from urdf/drone_pendulum_description. -->
+<mujocoinclude>
+    <asset>
+        <mesh name="drone" file="drone.STL" />
+        <mesh name="link1" file="upper_arm.STL" />
+        <mesh name="link2" file="lower_arm.STL" />
+    </asset>
+</mujocoinclude>

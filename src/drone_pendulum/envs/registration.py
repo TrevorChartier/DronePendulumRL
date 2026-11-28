@@ -16,6 +16,12 @@ MODEL_PATH = (
     / "assets"
     / "drone_pendulum.xml"
 )
+# Models built from the hardware CAD (0.6 kg airframe, 100 mm + 75 mm links). Same
+# body/joint names as the defaults, so pass them as model_path to the existing envs:
+#   gym.make(ENV_ID, model_path=str(CAD_MODEL_PATH))
+#   PlanarDronePendulumEnv(PlanarEnvConfig(model_path=str(PLANAR_CAD_MODEL_PATH)))
+CAD_MODEL_PATH = MODEL_PATH.with_name("drone_pendulum_cad.xml")
+PLANAR_CAD_MODEL_PATH = MODEL_PATH.with_name("drone_pendulum_2d_cad.xml")
 STARLING_MODEL_PATH = (
     Path(__file__).resolve().parents[1]
     / "starling_simulation" / "assets" / "starling2max_pendulum.xml"

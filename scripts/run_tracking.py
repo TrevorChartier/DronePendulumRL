@@ -6,14 +6,19 @@ Examples (from the repo root):
     python scripts/run_tracking.py --model 3d --traj figure8 --plot-file f8.png
     python scripts/run_tracking.py --model 3d --traj waypoints --video wp.mp4
     python scripts/run_tracking.py --model 3d --traj circle --no-rate-comp       # fails: see below
+    python scripts/run_tracking.py --model 3d --traj figure8 --cad               # hardware CAD model
 
 Trajectories: hover, circle, figure8, waypoints. Planar shapes are drawn in the y-z
 plane, 3D shapes in the x-y plane. Positions are relative to the spawn point.
 
-The 3D runs use drone_pendulum.xml, where the pendulum hangs from hinges about the body
-x-axis (like the real hardware's bearings). --no-rate-comp turns off the controller's
-inertia-aware rate-loop compensation to show why it is needed: without it the drone
-cannot pitch fast enough with the rigidly attached payload and tracking along x fails.
+By default the runs use the original models (drone_pendulum.xml / drone_pendulum_2d.xml:
+1 kg drone, two 0.5 m links, hinges about body x). There, --no-rate-comp shows why the 3D
+controller's inertia-aware rate-loop compensation is needed: without it the drone cannot
+pitch fast enough with the rigidly attached payload and tracking along x fails.
+
+--cad uses the models built from the hardware CAD (0.6 kg airframe, 100 mm + 75 mm links)
+and turns on the controllers' integral action, which removes a small steady offset
+caused by the CAD links' slightly off-axis centres of mass.
 """
 
 import argparse
@@ -26,7 +31,9 @@ from drone_pendulum.controllers.trajectories import make_trajectory
 from drone_pendulum.controllers.tracking_2d import PlanarTrackingController
 from drone_pendulum.controllers.tracking_3d import TrackingController3D
 from drone_pendulum.envs.planar_drone_pendulum_env import PlanarDronePendulumEnv, PlanarEnvConfig
-from drone_pendulum.envs.registration import ENV_ID
+from drone_pendulum.envs.registration import (
+    CAD_MODEL_PATH, ENV_ID, MODEL_PATH, PLANAR_CAD_MODEL_PATH)
+from drone_pendulum.simulation.simulator_2d import DEFAULT_MODEL_PATH as PLANAR_MODEL_PATH
 
 
 def make_env_and_controller(args):
@@ -39,16 +46,21 @@ def make_env_and_controller(args):
     render_mode = "rgb_array" if args.video else None
 
     if args.model == "planar":
-        env = PlanarDronePendulumEnv(PlanarEnvConfig(max_episode_seconds=args.seconds),
+        path = PLANAR_CAD_MODEL_PATH if args.cad else PLANAR_MODEL_PATH
+        env = PlanarDronePendulumEnv(PlanarEnvConfig(model_path=str(path),
+                                                     max_episode_seconds=args.seconds),
                                      render_mode=render_mode)
-        ctrl = PlanarTrackingController(env, traj, use_feedforward=not args.no_ff)
+        ctrl = PlanarTrackingController(env, traj, use_feedforward=not args.no_ff,
+                                        ki=(1.0, 3.0) if args.cad else (0.0, 0.0))
     else:
-        env = gym.make(ENV_ID, render_mode=render_mode, episode_limit=1)
+        path = str(CAD_MODEL_PATH if args.cad else MODEL_PATH)
+        env = gym.make(ENV_ID, model_path=path, render_mode=render_mode, episode_limit=1)
         steps = int(round(args.seconds / env.unwrapped.control_dt))
         env.close()
-        env = gym.make(ENV_ID, render_mode=render_mode, episode_limit=steps)
+        env = gym.make(ENV_ID, model_path=path, render_mode=render_mode, episode_limit=steps)
         ctrl = TrackingController3D(env, traj, use_feedforward=not args.no_ff,
-                                    compensate_rate_loop=not args.no_rate_comp)
+                                    compensate_rate_loop=not args.no_rate_comp,
+                                    ki=(1.0, 1.0, 3.0) if args.cad else (0.0, 0.0, 0.0))
     return env, ctrl, traj
 
 
@@ -64,11 +76,20 @@ def link_angles(env, model):
     if model == "planar":
         return np.rad2deg(np.abs(u.sim.drone_model.get_absolute_link_angles()))
     data, m = u.simulator.data, u.simulator.model
+    # pivot -> far end of each link; the CAD links use tip sites, the original model end masses
+    ends = (("link1_tip", "link2_tip") if m.nsite and _has_site(m, "link2_tip")
+            else ("link1_mass", "link2_mass"))
+    getter = data.site if ends[0].endswith("tip") else data.geom
     out = []
-    for body in ("link1", "link2"):
-        axis = data.xmat[m.body(body).id].reshape(3, 3)[:, 2]  # link points along -z_local
-        out.append(np.rad2deg(np.arccos(np.clip(axis[2], -1.0, 1.0))))
+    for body, end in zip(("link1", "link2"), ends):
+        v = getter(end).xpos - data.xpos[m.body(body).id]
+        out.append(np.rad2deg(np.arccos(np.clip(-v[2] / np.linalg.norm(v), -1.0, 1.0))))
     return np.array(out)
+
+
+def _has_site(model, name):
+    import mujoco
+    return mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, name) >= 0
 
 
 def main():
@@ -81,6 +102,8 @@ def main():
     p.add_argument("--no-ff", action="store_true", help="disable acceleration/jerk feedforward")
     p.add_argument("--no-rate-comp", action="store_true",
                    help="3D only: disable the inertia-aware rate-loop compensation")
+    p.add_argument("--cad", action="store_true",
+                   help="use the hardware CAD models (and integral action)")
     p.add_argument("--plot-file", help="save the plot instead of opening a window")
     p.add_argument("--no-plot", action="store_true")
     p.add_argument("--video", help="save an MP4 of the run")
