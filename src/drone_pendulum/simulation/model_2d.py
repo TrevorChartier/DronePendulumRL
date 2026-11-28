@@ -58,8 +58,14 @@ class PlanarDronePendulumModel:
         self.gravity = float(-self.model.opt.gravity[2])  # m/s^2 (positive)
 
         # Pendulum geometry, read from the model so it stays correct if you edit the XML.
-        self.link1_length = float(-self.model.body_pos[self.link2_id][2])
-        self.link2_length = float(-self.model.geom("link2_mass").pos[2])
+        self.link1_length = float(np.linalg.norm(self.model.body_pos[self.link2_id]))
+        self._has_tip_sites = mujoco.mj_name2id(
+            self.model, mujoco.mjtObj.mjOBJ_SITE, "link2_tip"
+        ) >= 0
+        link2_tip = (
+            self.model.site("link2_tip") if self._has_tip_sites else self.model.geom("link2_mass")
+        )
+        self.link2_length = float(np.linalg.norm(link2_tip.pos))
 
         mujoco.mj_forward(self.model, self.data)
 
@@ -116,7 +122,7 @@ class PlanarDronePendulumModel:
         return np.array([roll_dot + q1_dot, roll_dot + q1_dot + q2_dot])
 
     def get_payload_positions(self) -> np.ndarray:
-        """World (y, z) of the two point masses, shape (2, 2): [[y1, z1], [y2, z2]]."""
-        m1 = self.data.geom("link1_mass").xpos[1:3]
-        m2 = self.data.geom("link2_mass").xpos[1:3]
-        return np.array([m1, m2])
+        """World (y, z) positions of the link tips, ordered from upper to lower."""
+        if self._has_tip_sites:
+            return np.array([self.data.site(name).xpos[1:3] for name in ("link1_tip", "link2_tip")])
+        return np.array([self.data.geom(name).xpos[1:3] for name in ("link1_mass", "link2_mass")])

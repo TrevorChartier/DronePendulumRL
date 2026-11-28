@@ -108,6 +108,48 @@ the torque the desired rate response needs (`--no-rate-comp` shows the failure w
 it). On hardware, the flight controller's own rate loop replaces this P loop: turn the
 compensation off, or set `rate_loop_gain` / `k_rate` to match it.
 
+## Hardware CAD models
+
+`drone_pendulum_cad.xml` (3D) and `drone_pendulum_2d_cad.xml` (planar) are built from the
+hardware CAD (URDF and STL meshes from the `mbrl` branch). The original models remain
+the defaults, so existing training runs are unaffected. The CAD models use the same body
+and joint names, so pass them as `model_path`:
+
+```python
+from drone_pendulum.envs.registration import CAD_MODEL_PATH, PLANAR_CAD_MODEL_PATH
+env3d = gym.make(ENV_ID, model_path=str(CAD_MODEL_PATH))
+env2d = PlanarDronePendulumEnv(PlanarEnvConfig(model_path=str(PLANAR_CAD_MODEL_PATH)))
+```
+
+| | Original models | CAD models |
+| --- | --- | --- |
+| Drone + payload mass | 1.0 + 0.25 kg | 0.6 + 0.23 kg |
+| Links | 0.5 m + 0.5 m | 100 mm + 75 mm |
+| Pendulum swing modes (drone held) | 0.56 / 1.18 Hz | 1.4 / 2.35 Hz |
+| Hinge (bearing) axis | body x | body y (CAD frame) |
+| Rigid-axis inertia vs. bare drone | 11x (pitch) | 2.6x (roll) |
+
+Run the demos on the CAD models with `--cad`:
+
+```bash
+python scripts/run_tracking.py --model 3d --traj figure8 --cad
+```
+
+```bash
+python scripts/run_planar.py --cad --controller lqr --push 1.0 --render
+```
+
+`--cad` in `run_tracking.py` also enables integral action (`ki`), which removes a small
+steady offset caused by the CAD links' slightly off-axis centres of mass. Typical RMS
+tracking error: 0.2–0.3 cm planar, 0.8–1.6 cm 3D. The LQR builds on the CAD planar model
+and damps pushes completely. `lqr_2d.solve_dare` falls back to Riccati iteration because
+`scipy.linalg.solve_discrete_are` returns a wrong solution for this badly conditioned
+system.
+
+**Check the hinge axis.** In the CAD frame the bearings rotate about body +y, so the
+payload swings along body x. Confirm this matches the flight controller's body frame
+before testing on hardware.
+
 ## Planar PPO training and evaluation
 
 Run from the repository root after installing the project. With pip, activate your

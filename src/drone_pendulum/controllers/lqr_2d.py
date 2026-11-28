@@ -52,20 +52,58 @@ def linearize(env, x_eq: np.ndarray, u_eq: np.ndarray, eps: float = 1e-5):
         e_j = np.zeros(2)
         e_j[j] = 1.0
         B[:, j] = (f(x_eq, u_eq + eps * e_j) - f(x_eq, u_eq - eps * e_j)) / (2 * eps)
-    assert np.allclose(f(x_eq, u_eq), x_eq, atol=1e-5), "f(x_eq, u_eq) != x_eq; check your u_eq"
+    # The CAD model's airframe centre of mass is 0.04 mm off the roll axis, so one step
+    # from hover drifts by ~2e-4 rad/s; 1e-3 still catches a wrong u_eq (a 1% thrust
+    # error alone gives ~1e-3 m/s per 10 ms step).
+    assert np.allclose(f(x_eq, u_eq), x_eq, atol=1e-3), "f(x_eq, u_eq) != x_eq; check your u_eq"
     env.sim.reset(x_eq)  # reset to equilibrium for safety
     return A, B
+
+
+def _dare_residual(A, B, Q, R, P) -> float:
+    """Relative residual of the discrete algebraic Riccati equation at P."""
+    K = np.linalg.solve(R + B.T @ P @ B, B.T @ P @ A)
+    res = Q + A.T @ P @ (A - B @ K) - P
+    return float(np.max(np.abs(res)) / max(1.0, np.max(np.abs(P))))
+
+
+def solve_dare(A, B, Q, R, tol: float = 1e-10, max_iter: int = 200_000) -> np.ndarray:
+    """Solve the DARE, falling back to Riccati iteration if scipy's answer is wrong.
+
+    scipy.linalg.solve_discrete_are can silently return a non-solution on badly
+    conditioned problems. That happens with the CAD model: its fast, lightly damped
+    pendulum modes sit next to the integrator poles of position, and scipy's P had a
+    residual of ~1e2 and gave an unstable gain. Iterating P <- Q + A'P(A - BK) from
+    P = Q always converges to the stabilizing solution for a stabilizable/detectable
+    pair, just more slowly (~700 iterations here).
+    """
+    from scipy.linalg import solve_discrete_are
+
+    try:
+        P = solve_discrete_are(A, B, Q, R)
+        if np.all(np.isfinite(P)) and _dare_residual(A, B, Q, R, P) < 1e-6:
+            return P
+    except (np.linalg.LinAlgError, ValueError):
+        pass
+
+    P = Q.copy()
+    for _ in range(max_iter):
+        K = np.linalg.solve(R + B.T @ P @ B, B.T @ P @ A)
+        P_next = Q + A.T @ P @ (A - B @ K)
+        P_next = 0.5 * (P_next + P_next.T)
+        if np.max(np.abs(P_next - P)) < tol * max(1.0, np.max(np.abs(P))):
+            return P_next
+        P = P_next
+    raise RuntimeError("Riccati iteration did not converge")
 
 
 def design_lqr(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray) -> np.ndarray:
     """
     Return the (2, 10) discrete-time LQR gain K.
-    scipy.linalg.solve_discrete_are, then K = (R + B^T P B)^-1 B^T P A.
+    Solve the DARE (solve_dare), then K = (R + B^T P B)^-1 B^T P A.
     Check: eigenvalues of (A - B K) should all lie strictly inside the unit circle.
     And is (A, B) controllable? (rank of the controllability matrix)
     """
-    from scipy.linalg import solve_discrete_are
-
     # check controllability
     n = A.shape[0]
     C = np.hstack([np.linalg.matrix_power(A, k) @ B for k in range(n)])
@@ -73,7 +111,7 @@ def design_lqr(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray) -> np
         raise ValueError("(A, B) is not controllable")
 
     # Solve the discrete-time algebraic Riccati equation
-    P = solve_discrete_are(A, B, Q, R)
+    P = solve_dare(A, B, Q, R)
 
     # Compute the LQR gain K
     K = np.linalg.solve(R + B.T @ P @ B, B.T @ P @ A)

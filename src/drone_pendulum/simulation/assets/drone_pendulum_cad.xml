@@ -1,0 +1,51 @@
+
+<!--
+    3D drone + double pendulum built from the hardware CAD
+    (urdf/drone_pendulum_description on the mbrl branch; masses and inertias from
+    the SolidWorks mass reports). 0.6 kg airframe, 100 mm upper link (0.165 kg),
+    75 mm lower link (0.067 kg), total 0.832 kg.
+
+    Both pendulum joints are single-axis hinges (bearings). In this CAD frame the
+    bearing axis is the drone's body +Y, so the payload swings along body X and is
+    rigid about body X (roll). Check this against the flight controller's body frame
+    before hardware tests.
+
+    Body/joint names match drone_pendulum.xml, so DronePendulumEnv and the
+    controllers work unchanged:  gym.make(ENV_ID, model_path=str(CAD_MODEL_PATH))
+-->
+<mujoco model="drone_double_pendulum_cad">
+
+    <compiler angle="radian" autolimits="true" meshdir="meshes"/>
+
+    <option
+        timestep="0.002"
+        gravity="0 0 -9.81"
+        integrator="implicitfast"
+    />
+
+    <visual>
+        <headlight diffuse="0.7 0.7 0.7" ambient="0.3 0.3 0.3"/>
+    </visual>
+
+    <include file="cad_meshes.xml"/>
+
+    <worldbody>
+
+        <light pos="0 0 5" dir="0 0 -1"/>
+        <geom
+            name="ground"
+            type="plane"
+            size="5 5 0.1"
+            rgba="0.3 0.3 0.3 1"
+        />
+
+        <!-- Quadrotor -->
+        <body name="drone" pos="0 0 2">
+
+            <freejoint name="drone_free"/>
+
+            <include file="cad_airframe.xml"/>
+            <include file="cad_pendulum.xml"/>
+        </body>
+    </worldbody>
+</mujoco>
